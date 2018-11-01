@@ -1,4 +1,4 @@
-# An exercise full stack project
+# A Spatial Planning etc. tool
 
 The idea is to create an app that contains / allows / does
 
