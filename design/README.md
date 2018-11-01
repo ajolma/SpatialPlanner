@@ -25,7 +25,7 @@ Infrastructure: Mongo, Mongoose, Node, Express, React
 
 *Since I'm learning these*
 
-Mapping library: React-Leaflet, react-leaflet-draw
+Mapping library: React-Leaflet, react-leaflet-draw, geojson
 
 *Since I haven't used Leaflet and its React wrappers seem ok*
 
