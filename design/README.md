@@ -60,33 +60,33 @@ POST /register
 
 Register a new user.
 
-request body = {username:string, password:string}
-200 response body = {message:"success"}
-409 response body = {message:string}
+* request body = {username:string, password:string}
+* 200 response body = {message:"success"}
+* 409 response body = {message:string}
 
 POST /login
 
 Login an existing user.
 
-request body = {username:string, password:string}
-response status = 200, 403
-200 response body = {toke:string}
-403 response body = {message:string}
+* request body = {username:string, password:string}
+* response status = 200, 403
+* 200 response body = {toke:string}
+* 403 response body = {message:string}
 
 POST /logout
 
 Logout a logged in user.
 
-request headers include token:string
-200 response body = {message:"success"}
-404 response body = {message:string}
+* request headers include token:string
+* 200 response body = {message:"success"}
+* 404 response body = {message:string}
 
 POST /api/areas
 
 Add an area and possibly new tags.
 
-request headers include token:string
-request body = {area:GeoJSON, tags:[string]}
+* request headers include token:string
+* request body = {area:GeoJSON, tags:[string]}
 
 GET /api/areas
 
@@ -95,13 +95,13 @@ requires tag and optionally exclude tags, and include or exclude
 users. If include_users key exists, exclude_users is not used. The 200
 response may be an empty array.
 
-request headers include optionally token:string
-request body = {tag:string,
+* request headers include optionally token:string
+* request body = {tag:string,
                 exclude_tags:[string],
                 include_users:[string],
                 exclude_users:[string]}
-200 response body = [{area:GeoJSON, tags:[string]}]
-400 response body = {message:string}
+* 200 response body = [{area:GeoJSON, tags:[string]}]
+* 400 response body = {message:string}
 
 # Database structure
 
@@ -110,14 +110,15 @@ used together with tag x?".
 
 user
 
-username:{type:String, unique:true},
-password:String
-
-area
-
-area:String,
-tags:[String]
+* username:{type:String, unique:true},
+* password:String
 
 tag
 
-tag:String
+* tag:String
+
+area
+
+* creator:user.username
+* area:GeoJSON.Polygon,
+* tags:[tag]
