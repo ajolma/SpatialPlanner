@@ -96,10 +96,12 @@ users. If include_users key exists, exclude_users is not used. The 200
 response may be an empty array.
 
 * request headers include optionally token:string
-* request body = {tag:string,
-                exclude_tags:[string],
-                include_users:[string],
-                exclude_users:[string]}
+* request body = {
+  * tag:string,
+  * exclude_tags:[string], // optional
+  * include_users:[string], // optional
+  * exclude_users:[string] // optional, disregarded if include_users is given
+  * }
 * 200 response body = [{area:GeoJSON, tags:[string]}]
 * 400 response body = {message:string}
 
