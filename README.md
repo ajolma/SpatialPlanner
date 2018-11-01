@@ -9,11 +9,11 @@ The idea is to create an app that contains / allows / does
 
 * Users
 
-* User to create types for areas
-
 * User to delineate areas
 
-* User can bring into the map view areas of selected types and of selected users
+* User to attach tags to areas
+
+* User can bring into the map view areas with selected tags and of selected users
 
 * The app updates itself
 
