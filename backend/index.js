@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const userModel = require('./models/user');
 const bcrypt = require('bcrypt-nodejs');
 
-mongoose.connect('mongodb://localhost/tasksdatabase').then(
+mongoose.connect('mongodb://localhost/areas').then(
     () => {console.log("MongoDB connection success")},
     (error) => {console.log("MongoDB connection failure:"+error)}
 );

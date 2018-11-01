@@ -107,7 +107,7 @@ response may be an empty array.
 
 # Database structure
 
-Probably redundant data needed to speed up queries like "what tags are
+Probably redundant data needed to speed up queries like "which tags are
 used together with tag x?".
 
 user

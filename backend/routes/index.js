@@ -14,7 +14,9 @@ router.get("/areas", function(req, res) {
 
 router.post("/areas", function(req, res) {
     let area = new areaModel({
-        creator: req.body.creator
+        creator: req.body.creator,
+        area: req.body.area,
+        tags: req.body.tags
     });
     area.save(function(err, area) {
         if (err) {
