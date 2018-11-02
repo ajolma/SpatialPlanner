@@ -1,6 +1,7 @@
 let express = require('express');
 let parser = require('body-parser');
 let router = require('./routes');
+const pub_router = require('./routes/pub_router');
 const mongoose = require('mongoose');
 const userModel = require('./models/user');
 const bcrypt = require('bcrypt-nodejs');
@@ -115,6 +116,7 @@ app.post("/logout", function(req, res) {
 });
 
 app.use("/api", isUserLogged, router);
+app.use("/", pub_router);
 
 app.listen(3001);
 

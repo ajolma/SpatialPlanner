@@ -3,6 +3,10 @@ const areaModel = require('../models/area');
 
 let router = express.Router();
 
+// TODO: optimizations (such as tags collection)
+
+// Areas API
+
 router.get("/areas", function(req, res) {
     areaModel.find({}, function(err, areas) {
         if (err) {
@@ -45,5 +49,7 @@ router.delete("/areas/:id", function(req, res) {
         }
     });
 });
+
+// Tags API, horribly unoptimal
 
 module.exports = router;

@@ -42,12 +42,10 @@ Users: register, login, logout, add area (= draw polygon, write tags
 polygon, add/delete attached tags), delete area
 
 All: search in tags, bring areas into map with a selected tag. The
-selection can be fine tuned with excluding some tags (if that tag
-appears in the area in addition to the selecting tag, that area is not
-included), and including or excluding selected users. Selecting a tag
-shows users who have created data with that tag and also tags that
-have been used together with that tag. Need to study if the selection
-must be in two steps: 1) create a search (tag, -tags, +users/-users)
+selection can be fine tuned with requiring another tag or tags to
+appear in the area in addition to the selecting tag, and requiring
+that the area is created by a selected user. Need to study if the
+selection must be in two steps: 1) create a search (tag, +tags, +user)
 2) add the matching areas to map with selected color.
 
 Additional features.
@@ -55,6 +53,27 @@ Additional features.
 User privacy.
 
 # REST API
+
+## Public API
+
+GET /tags
+
+Get tags.
+
+* 200 response body = [tag]
+* 400 response body = {message:string}
+
+GET /areas
+
+Get areas. Requires tag and optionally tags, and creator. The 200
+response may be an empty array.
+
+* request params:
+  * tag=string,
+  * tags=string,string,... // optional, required additional tags
+  * creator=string // optional, required creator
+* 200 response body = [area]
+* 400 response body = {message:string}
 
 POST /register
 
@@ -81,6 +100,8 @@ Logout a logged in user.
 * 200 response body = {message:"success"}
 * 404 response body = {message:string}
 
+## Creator API (needs authentication)
+
 POST /api/areas
 
 Add an area and possibly new tags.
@@ -90,19 +111,14 @@ Add an area and possibly new tags.
 
 GET /api/areas
 
-Get areas. If token is given, returns only users' areas, otherwise
-requires tag and optionally exclude tags, and include or exclude
-users. If include_users key exists, exclude_users is not used. The 200
-response may be an empty array.
+Get user's areas. Returns users' areas, tag and tags are optional. The
+200 response may be an empty array.
 
 * request headers include optionally token:string
-* request body = {
-  * tag:string,
-  * exclude_tags:[string], // optional
-  * include_users:[string], // optional
-  * exclude_users:[string] // optional, disregarded if include_users is given
-  * }
-* 200 response body = [{area:GeoJSON, tags:[string]}]
+* request params:
+  * tag=string, // optional
+  * tags=string,string,... // optional, required additional tags
+* 200 response body = [area]
 * 400 response body = {message:string}
 
 # Database structure

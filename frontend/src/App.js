@@ -4,6 +4,8 @@ import { Form, Radio, Image, Button } from 'semantic-ui-react';
 import { Map, TileLayer, FeatureGroup, Polygon } from 'react-leaflet';
 import { EditControl } from "react-leaflet-draw";
 import LoginForm from './components/LoginForm';
+import Legend from './components/Legend';
+import SearchTool from './components/SearchTool';
 
 class App extends Component {
 
@@ -14,9 +16,11 @@ class App extends Component {
             username: "",
             mode: "Browse",
             token: "",
-            users: [],
+            creators: [],
             polygons: [],
-            tags: ["tag1", "tag2"]
+            tags: ["tag1", "tag2"],
+            tag: "",
+            layers: [] // {tag, tags, creator, areas, color}
         };
     }
 
@@ -93,7 +97,48 @@ class App extends Component {
         }
     }
 
+    addLayer = (layer) => {
+        console.log(layer);
+        let layers = this.state.layers;
+        layers.push(layer);
+        this.setState({
+            layers: layers
+        });
+        
+    }
+
     componentDidMount() {
+        let obj = {
+            method: "GET",
+            mode: "cors",
+            headers: {"Content-Type":"application/json"}
+        };
+        fetch("/tags", obj).then((response) => { // 200-499
+            if (response.ok) {
+                response.json().then((data) => {
+                    this.setState({
+                        tags: data
+                    });
+                });
+            } else {
+                console.log("Server responded with status: "+response.status);
+            }
+        }).catch((error) => { // 500-599
+            console.log(error);
+        });
+        fetch("/creators", obj).then((response) => { // 200-499
+            if (response.ok) {
+                response.json().then((data) => {
+                    this.setState({
+                        creators: data
+                    });
+                });
+            } else {
+                console.log("Server responded with status: "+response.status);
+            }
+        }).catch((error) => { // 500-599
+            console.log(error);
+        });
         if (sessionStorage.getItem("isLoggedIn")) {
             let isLoggedIn = sessionStorage.getItem("isLoggedIn");
             let token = sessionStorage.getItem("token");
@@ -104,9 +149,6 @@ class App extends Component {
                 username: username,
                 mode: isLoggedIn === "true" ? "Add" : "Browse"
             });
-            if (isLoggedIn === "true") {
-                this.getUsers(token);
-            }
         }
     }
 
@@ -147,40 +189,20 @@ class App extends Component {
         });
     }
 
-    getUsers = (token) => {
-        let obj = {
-            method:"GET",
-            mode:"cors",
-            headers:{
-                "Content-Type":"application/json",
-                token:token ? token: this.state.token
-            }
-        };
-        fetch("/users", obj).then((response) => { // 200-499
-            if (response.ok) {
-                response.json().then((data) => {
-                    this.setState({
-                        users: data
-                    });
-                }).catch((error) => {
-                    console.log(error);
-                });
-            } else {
-                console.log("Server responded with status: "+response.status);
-            }
-        }).catch((error) => { // 500-599
-            console.log(error);
-        });
-    }
-    
     render() {
         let tiles = {
             url:"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
         };
         let position = [60, 25];
-        let polygons = this.state.polygons.map(
-            (item, index) => <Polygon key={index} color="purple" positions={item} />);
+        let polygons = [];
+        for (let i = 0; i < this.state.layers.length; i++) {
+            let areas = this.state.layers[i].areas.map(
+                (item, index) => <Polygon key={index}
+                                          color={this.state.layers[i].color}
+                                          positions={item.area.coordinates} />);
+            polygons.push(...areas);
+        }
         let fg = '';
         if (this.state.mode === 'Add') {
             fg = (
@@ -261,7 +283,12 @@ class App extends Component {
                 {polygons}
                 {fg}
               </Map>
-              
+              <div className="right">
+                <SearchTool tags={this.state.tags}
+                            creators={this.state.creators}
+                            addLayer={this.addLayer}/>
+                <Legend layers={this.state.layers}/>
+              </div>
             </div>
     );
   }
