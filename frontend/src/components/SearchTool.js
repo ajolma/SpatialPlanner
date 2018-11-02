@@ -31,7 +31,8 @@ export default class SearchTool extends React.Component {
             tag: this.state.tag,
             tags: this.state.tags,
             creator: this.state.creator,
-            color: this.state.color ? this.state.color : 'red'
+            color: this.state.color ? this.state.color : 'red',
+            geometries: []
         };
         let obj = {
             method: "GET",
@@ -41,7 +42,7 @@ export default class SearchTool extends React.Component {
                 //"token":this.props.token if the user wants her own layers
             }
         };
-        let url = "/areas?tag="+layer.tag;
+        let url = "/layers?tag="+layer.tag;
         if (layer.tags.length > 0) {
             url += "&tags=" + layer.tags.join(",");
         }
@@ -51,7 +52,11 @@ export default class SearchTool extends React.Component {
         fetch(url, obj).then((response) => { // 200-499
             if (response.ok) {
                 response.json().then((data) => {
-                    layer.areas = data;
+                    for (let i = 0; i < data.length; i++) {
+                        for (let j = 0; j < data[i].geometries.length; j++) {
+                            layer.geometries.push(data[i].geometries[j]);
+                        }
+                    }
                     this.props.addLayer(layer);
                 });
             } else {

@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 const userModel = require('./models/user');
 const bcrypt = require('bcrypt-nodejs');
 
-mongoose.connect('mongodb://localhost/areas').then(
+mongoose.connect('mongodb://localhost/spatialplanner').then(
     () => {console.log("MongoDB connection success")},
     (error) => {console.log("MongoDB connection failure:"+error)}
 );
@@ -90,6 +90,9 @@ app.post("/login", function(req, res) {
         return res.status(403).json({"message": "Wrong username or password"});
     }
     userModel.findOne({username: req.body.username}, function(err, user) {
+        if (!user) {
+            return res.status(403).json({"message": "Wrong username or password"});
+        }
         if (!err && isPasswdValid(req.body.password, user.password)) {
             console.log("login "+user.username);
             let token = createToken();

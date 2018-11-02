@@ -5,6 +5,7 @@ import { Map, TileLayer, FeatureGroup, Polygon } from 'react-leaflet';
 import { EditControl } from "react-leaflet-draw";
 import LoginForm from './components/LoginForm';
 import Legend from './components/Legend';
+import LayerForm from './components/LayerForm';
 import SearchTool from './components/SearchTool';
 
 class App extends Component {
@@ -17,11 +18,17 @@ class App extends Component {
             mode: "Browse",
             token: "",
             creators: [],
-            polygons: [],
             tags: ["tag1", "tag2"],
             tag: "",
-            layers: [] // {tag, tags, creator, areas, color}
+            layers: [] // {tag, tags, creator, geometries, color}
         };
+    }
+
+    changeMode = (e, {value}) => {
+        console.log(value);
+        this.setState({
+            mode: value
+        });
     }
 
     polygons = []
@@ -45,60 +52,26 @@ class App extends Component {
         this.featureGroupInEdit = group;
     }
 
-    changeMode = (e, {value}) => {
-        console.log(value);
-        this.setState({
-            mode: value
-        });
-    }
-
-    newTags = (e) => {
-        console.log(e.target);
-        this.setState({
-            tags: e.target.value.split(", ")
-        });
-    }
-
-    onSave = (event) => {
-        event.preventDefault();
-        this.setState({polygons:this.polygons});
+    endEdit = () => {
         if (this.featureGroupInEdit) {
             this.featureGroupInEdit.leafletElement.clearLayers();
         }
-        for (let i = 0; i < this.polygons.length; i++) {
-            let request = {
-                creator: this.state.username,
-                area: {
-                    type: "Polygon",
-                    coordinates: [this.polygons[i]]
-                },
-                tags: this.state.tags
-            };
-            let obj = {
-                method:"POST",
-                mode:"cors",
-                headers:{
-                    "Content-Type":"application/json",
-                    "token":this.state.token
-                },
-                body:JSON.stringify(request)
-            };
-            fetch("/api/areas", obj).then((response) => { // 200-499
-                if (response.ok) {
-                    response.json().then((data) => {
-                        //
-                    });
-                } else {
-                    console.log("Server responded with status: "+response.status);
-                }
-            }).catch((error) => { // 500-599
-                console.log(error);
-            });
-        }
+    }
+
+    newLayer = (layer) => {
+        console.log("new layer");
+        layer.tag = (layer.tags.splice(0, 1))[0];
+        layer.creator = this.state.username;
+        layer.color = "red";
+        let layers = this.state.layers;
+        layers.push(layer);
+        this.setState({
+            layers: layers
+        });
     }
 
     addLayer = (layer) => {
-        console.log(layer);
+        console.log("add layer");
         let layers = this.state.layers;
         layers.push(layer);
         this.setState({
@@ -166,7 +139,6 @@ class App extends Component {
             mode: "Add"
         });
         this.setSessionStorage(true, data.token, data.username);
-        this.getUsers();
     }
 
     logout = () => {
@@ -197,11 +169,11 @@ class App extends Component {
         let position = [60, 25];
         let polygons = [];
         for (let i = 0; i < this.state.layers.length; i++) {
-            let areas = this.state.layers[i].areas.map(
+            let polygons_in_layer = this.state.layers[i].geometries.map(
                 (item, index) => <Polygon key={index}
                                           color={this.state.layers[i].color}
-                                          positions={item.area.coordinates} />);
-            polygons.push(...areas);
+                                          positions={item.coordinates} />);
+            polygons.push(...polygons_in_layer);
         }
         let fg = '';
         if (this.state.mode === 'Add') {
@@ -243,16 +215,12 @@ class App extends Component {
             if (this.state.mode === 'Add') {
                 login_or_save = (
                     <Form.Group>
+                      <LayerForm token={this.state.token}
+                                 tags={this.state.tags}
+                                 polygons={this.polygons}
+                                 endEdit={this.endEdit}
+                                 newLayer={this.newLayer}/>
                       <Form.Field>
-                        <input type="text"
-                               name="tags"
-                               value={this.state.tags.join(", ")}
-                               onChange={this.newTags}/>
-                      </Form.Field>
-                      <Form.Field>
-                        <Button onClick={this.onSave}
-                                name="save">Save
-                        </Button>
                         <Button onClick={this.logout}
                                 name="logout">Logout ({this.state.username})
                         </Button>

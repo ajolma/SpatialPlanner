@@ -1,5 +1,5 @@
 let express = require('express');
-const areaModel = require('../models/area');
+const layerModel = require('../models/layer');
 const userModel = require('../models/user');
 
 let router = express.Router();
@@ -22,32 +22,32 @@ router.get("/creators", function(req, res) {
 });
 
 
-// Areas API
+// Layers API
 
-router.get("/areas", function(req, res) {
+router.get("/layers", function(req, res) {
     console.log(JSON.stringify(req.query));
     if (!req.query.tag) {
         return res.status(400).json({"message": "tag missing"});
     }
-    areaModel.find({tags: req.query.tag}, function(err, areas) {
+    layerModel.find({tags: req.query.tag}, function(err, layers) {
         if (err) {
             return res.status(409).json({"message": err});
         }
-        res.status(200).json(areas);
+        res.status(200).json(layers);
     });
 });
 
 // Tags API, horribly unoptimal
 
 router.get("/tags", function(req, res) {
-    areaModel.find({}, function(err, areas) {
+    layerModel.find({}, function(err, layers) {
         if (err) {
             return res.status(409).json({"message": err});
         }
         let tags_set = new Set();
-        for (let i = 0; i < areas.length; i++) {
-            for (let j = 0; j < areas[i].tags.length; j++) {
-                tags_set.add(areas[i].tags[j]);
+        for (let i = 0; i < layers.length; i++) {
+            for (let j = 0; j < layers[i].tags.length; j++) {
+                tags_set.add(layers[i].tags[j]);
             }
         }
         let tags_array = [];
