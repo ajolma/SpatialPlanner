@@ -10,18 +10,77 @@ import SearchTool from './components/SearchTool';
 
 class App extends Component {
 
+    colors = {
+        all: ["Aqua","Blue","BlueViolet","Brown","BurlyWood","CadetBlue","Chartreuse","Chocolate","Coral","CornflowerBlue","Crimson","Cyan","DarkBlue","DarkCyan","DarkGoldenRod","DarkGray","DarkGrey","DarkGreen","DarkKhaki","DarkMagenta","DarkOliveGreen","DarkOrange","DarkOrchid","DarkRed","DarkSalmon","DarkSeaGreen","DarkSlateBlue","DarkTurquoise","DarkViolet","DeepPink","DeepSkyBlue","DimGrey","DodgerBlue","FireBrick","ForestGreen","Fuchsia","Gainsboro","Gold","GoldenRod","Grey","Green","GreenYellow","HoneyDew","HotPink","IndianRed","Indigo","LawnGreen","LightBlue","LightCoral","LightGreen","LightPink","LightSalmon","LightSeaGreen","LightSkyBlue","LightSteelBlue","Lime","LimeGreen","Linen","Magenta","Maroon","MediumAquaMarine","MediumBlue","MediumOrchid","MediumPurple","MediumSeaGreen","MediumSlateBlue","MediumSpringGreen","MediumTurquoise","MediumVioletRed","MidnightBlue","MistyRose","Moccasin","Navy","Olive","OliveDrab","Orange","OrangeRed","Orchid","PaleGreen","PaleTurquoise","PaleVioletRed","Peru","Pink","Plum","PowderBlue","Purple","RebeccaPurple","Red","RosyBrown","RoyalBlue","SaddleBrown","Salmon","SandyBrown","SeaGreen","Sienna","Silver","SkyBlue","SlateBlue","SpringGreen","SteelBlue","Tan","Teal","Thistle","Tomato","Turquoise","Violet","Yellow","YellowGreen"],
+        notUsed: []
+    }
+
     constructor(props) {
         super(props);
         this.state = {
+            mode: "Browse",
+            tags: [], // all tags in database
+            creators: [], // all (public?) creators in database
+            layers: [], // {tag, tags, creator, geometries, color}
+            // below is set only if logged in
             isLoggedIn: false,
             username: "",
-            mode: "Browse",
             token: "",
-            creators: [],
-            tags: ["tag1", "tag2"],
-            tag: "",
-            layers: [] // {tag, tags, creator, geometries, color}
+            userLayers: [] // {tags, geometries, color}
         };
+    }
+
+    getUserLayers = () => {
+        let obj = {
+            method: "GET",
+            mode: "cors",
+            headers: {
+                "Content-Type":"application/json",
+                token: this.state.token
+            }
+        };
+        fetch("/api/layers", obj).then((response) => { // 200-499
+            if (response.ok) {
+                response.json().then((layers) => {
+                    for (let i = 0; i < layers.length; i++) {
+                        layers[i].color = this.colors.all[i];
+                    }
+                    let newLayers = this.state.userLayers;
+                    newLayers.push(...layers);
+                    this.setState({
+                        userLayers: newLayers
+                    });
+                });
+            } else {
+                console.log("Server responded with status: "+response.status);
+            }
+        }).catch((error) => { // 500-599
+            console.log(error);
+        });
+    }
+
+    deleteLayer = (layer_index) => {
+        let obj = {
+            method: "DELETE",
+            mode: "cors",
+            headers: {
+                "Content-Type":"application/json",
+                token: this.state.token
+            }
+        };
+        fetch("/api/layers/" + this.state.userLayers[layer_index]._id, obj).then((response) => { // 200-499
+            if (response.ok) {
+                let newLayers = this.state.userLayers;
+                newLayers.splice(layer_index, 1);
+                this.setState({
+                    userLayers: newLayers
+                });
+            } else {
+                console.log("Server responded with status: "+response.status);
+            }
+        }).catch((error) => { // 500-599
+            console.log(error);
+        });
     }
 
     changeMode = (e, {value}) => {
@@ -62,22 +121,32 @@ class App extends Component {
         console.log("new layer");
         layer.tag = (layer.tags.splice(0, 1))[0];
         layer.creator = this.state.username;
-        layer.color = "red";
-        let layers = this.state.layers;
+        layer.color = this.colors.all[this.state.userLayers.length];
+        layer.saved = true;
+        let layers = this.state.userLayers;
         layers.push(layer);
         this.setState({
-            layers: layers
+            userLayers: layers
         });
     }
 
     addLayer = (layer) => {
         console.log("add layer");
+        layer.saved = false;
         let layers = this.state.layers;
         layers.push(layer);
         this.setState({
             layers: layers
         });
         
+    }
+
+    removeLayer = (layer_index) => {
+        let layers = this.state.layers;
+        layers.splice(layer_index, 1);
+        this.setState({
+            layers: layers
+        });
     }
 
     componentDidMount() {
@@ -139,6 +208,7 @@ class App extends Component {
             mode: "Add"
         });
         this.setSessionStorage(true, data.token, data.username);
+        this.getUserLayers();
     }
 
     logout = () => {
@@ -150,12 +220,15 @@ class App extends Component {
                 token:this.state.token
             },
         };
+        this.setState({
+            isLoggedIn: false,
+            username: "",
+            token: "",
+            userLayers: []
+        });
+        this.endEdit();
+        this.setSessionStorage(false, "", "");
         fetch("/logout", obj).then((response) => { // 200-499
-            this.setState({
-                isLoggedIn: false,
-                token: ""
-            });
-            this.setSessionStorage(false, "", "");
         }).catch((error) => { // 500-599
             console.log(error);
         });
@@ -168,10 +241,11 @@ class App extends Component {
         };
         let position = [60, 25];
         let polygons = [];
-        for (let i = 0; i < this.state.layers.length; i++) {
-            let polygons_in_layer = this.state.layers[i].geometries.map(
-                (item, index) => <Polygon key={index}
-                                          color={this.state.layers[i].color}
+        let layers = this.state.mode === 'Add' ? this.state.userLayers : this.state.layers;
+        for (let i = 0; i < layers.length; i++) {
+            let polygons_in_layer = layers[i].geometries.map(
+                (item, index) => <Polygon key={i+"."+index}
+                                          color={layers[i].color}
                                           positions={item.coordinates} />);
             polygons.push(...polygons_in_layer);
         }
@@ -191,6 +265,7 @@ class App extends Component {
                 </FeatureGroup>);
         }
         let radio = '';
+        let login;
         if (this.state.isLoggedIn) {
             radio = (
                 <Form.Group>
@@ -209,31 +284,29 @@ class App extends Component {
                            onChange={this.changeMode}/>
                   </Form.Field>
                 </Form.Group>);
-        }
-        let login_or_save = '';
-        if (this.state.isLoggedIn) {
-            if (this.state.mode === 'Add') {
-                login_or_save = (
-                    <Form.Group>
-                      <LayerForm token={this.state.token}
-                                 tags={this.state.tags}
-                                 polygons={this.polygons}
-                                 endEdit={this.endEdit}
-                                 newLayer={this.newLayer}/>
-                      <Form.Field>
-                        <Button onClick={this.logout}
-                                name="logout">Logout ({this.state.username})
-                        </Button>
-                      </Form.Field>
-                    </Form.Group>);
-            } else {
-                login_or_save = (<Button onClick={this.logout}
-                                         name="logout">Logout ({this.state.username})
-                                 </Button>);
-            }
+            login = (
+                <Button onClick={this.logout}
+                        name="logout">Logout ({this.state.username})
+                </Button>);
         } else {
-            login_or_save = (
-                <LoginForm login={this.login}/>);
+            login = (<LoginForm login={this.login}/>);
+        }
+        let layerForm;
+        if (this.state.isLoggedIn && this.state.mode === 'Add') {
+            layerForm = (
+                <LayerForm token={this.state.token}
+                           polygons={this.polygons}
+                           endEdit={this.endEdit}
+                           newLayer={this.newLayer}/>
+            );
+        } else {
+            layerForm = (
+                <SearchTool colors={this.colors}
+                            tags={this.state.tags}
+                            creators={this.state.creators}
+                            layers={this.state.layers}
+                            addLayer={this.addLayer}/>
+            );
         }
         return (
             <div className="App">
@@ -243,7 +316,7 @@ class App extends Component {
                     <Image src='logo.png'/>
                   </Form.Field>
                   {radio}
-                  {login_or_save}
+                  {login}
                 </Form.Group>
               </Form>
               <Map center={position} zoom={10}>
@@ -252,10 +325,12 @@ class App extends Component {
                 {fg}
               </Map>
               <div className="right">
-                <SearchTool tags={this.state.tags}
-                            creators={this.state.creators}
-                            addLayer={this.addLayer}/>
-                <Legend layers={this.state.layers}/>
+                {layerForm}
+                <br/>
+                <Legend layers={layers}
+                        mode={this.state.mode}
+                        removeLayer={this.removeLayer}
+                        deleteLayer={this.deleteLayer}/>
               </div>
             </div>
     );

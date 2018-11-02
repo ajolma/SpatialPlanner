@@ -1,12 +1,12 @@
 import React from 'react';
-import {Form, Button} from 'semantic-ui-react';
+import {Form, Message, Label, Input, Button} from 'semantic-ui-react';
 
 export default class LayerForm extends React.Component {
 
     constructor(props) {
         super(props);
         this.state = {
-            tags: ["tag1", "tag2"]
+            tags: []
         };
     }
 
@@ -56,19 +56,33 @@ export default class LayerForm extends React.Component {
     
     render() {
         return (
-            <Form.Group>
+            <Form>
               <Form.Field>
-                <input type="text"
-                       name="tags"
-                       value={this.state.tags.join(", ")}
-                       onChange={this.newTags}/>
+                <Message>
+                  <Message.Header>Layer creation tool</Message.Header>
+                  <p>
+                    Add polygons using map drawing tools, add tags separated by comma and space and then save.
+                  </p>
+                </Message>
               </Form.Field>
+              <Form.Group>
+                <Form.Field>
+                  <Label>Tags:</Label>
+                </Form.Field>
+                <Form.Field>
+                  <Input type="text"
+                         name="tags"
+                         placeholder="tag1, tag2, ..."
+                         value={this.state.tags.join(", ")}
+                         onChange={this.newTags}/>
+                </Form.Field>
+              </Form.Group>
               <Form.Field>
                 <Button onClick={this.onSave}
                         name="save">Save
                 </Button>
               </Form.Field>
-            </Form.Group>
+            </Form>
         );
     }
 

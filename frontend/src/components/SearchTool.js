@@ -30,8 +30,8 @@ export default class SearchTool extends React.Component {
         let layer = {
             tag: this.state.tag,
             tags: this.state.tags,
-            creator: this.state.creator,
-            color: this.state.color ? this.state.color : 'red',
+            creator: this.state.creator ? this.state.creator : "any",
+            color: this.state.color ? this.state.color : this.props.colors.notUsed[0],
             geometries: []
         };
         let obj = {
@@ -72,6 +72,22 @@ export default class SearchTool extends React.Component {
             (tag, i) => {return {key: i, text: tag, value: tag};});
         let creators = this.props.creators.map(
             (creator, i) => {return {key: i, text: creator, value: creator};});
+        let colors = [];
+        this.props.colors.notUsed = [];
+        for (let i = 0; i < this.props.colors.all.length; i++) {
+            let color = this.props.colors.all[i];
+            let used = false;
+            for (let j = 0; j < this.props.layers.length; j++) {
+                if (this.props.layers[j].color === color) {
+                    used = true;
+                    break;
+                }
+            }
+            if (!used) {
+                colors.push({key: i, text: color, value: color});
+                this.props.colors.notUsed.push(color);
+            }
+        }
         return (
             <Form>
               <Form.Field>
@@ -86,7 +102,7 @@ export default class SearchTool extends React.Component {
                 <label>Require additional tags</label>
                 <Dropdown name="tags"
                           key="tags"
-                          placeholder='Require tags' fluid selection multiple
+                          placeholder='Tags' fluid selection multiple
                           options={tags}
                           value={this.state.tags}
                           onChange={this.onChange2}/>
@@ -95,17 +111,19 @@ export default class SearchTool extends React.Component {
                 <label>Require creator</label>
                 <Dropdown name="creator"
                           key="creator"
-                          placeholder='Require creator' fluid selection
+                          placeholder='Creator' fluid selection
                           options={creators}
                           value={this.state.creator}
                           onChange={this.onChange2}/>
               </Form.Field>
               <Form.Field>
                 <label>Color for the layer</label>
-                <input type="text"
-                       name="color"
-                       value={this.state.color}
-                       onChange={this.onChange}/>
+                <Dropdown name="color"
+                          key="color"
+                          placeholder='Layer color' fluid selection
+                          options={colors}
+                          value={this.state.color}
+                          onChange={this.onChange2}/>
               </Form.Field>
               <Button onClick={this.onSubmit}
                       name="save">Add layer</Button>
