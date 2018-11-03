@@ -5,6 +5,7 @@ import { Map, TileLayer, FeatureGroup, Polygon } from 'react-leaflet';
 import { EditControl } from "react-leaflet-draw";
 import LoginForm from './components/LoginForm';
 import Legend from './components/Legend';
+import CreatorLegend from './components/CreatorLegend';
 import LayerForm from './components/LayerForm';
 import SearchTool from './components/SearchTool';
 
@@ -59,28 +60,21 @@ class App extends Component {
         });
     }
 
-    deleteLayer = (layer_index) => {
-        let obj = {
-            method: "DELETE",
-            mode: "cors",
-            headers: {
-                "Content-Type":"application/json",
-                token: this.state.token
-            }
-        };
-        fetch("/api/layers/" + this.state.userLayers[layer_index]._id, obj).then((response) => { // 200-499
-            if (response.ok) {
-                let newLayers = this.state.userLayers;
-                newLayers.splice(layer_index, 1);
-                this.setState({
-                    userLayers: newLayers
-                });
+    deleteLayer = (layer_id) => {
+        let change = false;
+        let newLayers = [];
+        for (let i = 0; i < this.state.userLayers.lenght; i++) {
+            if (this.state.userLayers[i]._id !== layer_id) {
+                newLayers.push(this.state.userLayers[i]);
             } else {
-                console.log("Server responded with status: "+response.status);
+                change = true;
             }
-        }).catch((error) => { // 500-599
-            console.log(error);
-        });
+        }
+        if (change) {
+            this.setState({
+                userLayers: newLayers
+            });
+        }
     }
 
     changeMode = (e, {value}) => {
@@ -119,20 +113,23 @@ class App extends Component {
 
     newLayer = (layer) => {
         console.log("new layer");
-        layer.tag = (layer.tags.splice(0, 1))[0];
-        layer.creator = this.state.username;
+        let tags = this.state.tags;
+        for (let i = 0; i < layer.tags.length; i++) {
+            if (tags.indexOf(layer.tags[i]) === -1) {
+                tags.push(layer.tags[i]);
+            }
+        }
         layer.color = this.colors.all[this.state.userLayers.length];
-        layer.saved = true;
         let layers = this.state.userLayers;
         layers.push(layer);
         this.setState({
+            tags: tags,
             userLayers: layers
         });
     }
 
     addLayer = (layer) => {
         console.log("add layer");
-        layer.saved = false;
         let layers = this.state.layers;
         layers.push(layer);
         this.setState({
@@ -249,23 +246,11 @@ class App extends Component {
                                           positions={item.coordinates} />);
             polygons.push(...polygons_in_layer);
         }
-        let fg = '';
-        if (this.state.mode === 'Add') {
-            fg = (
-                <FeatureGroup ref={ (reactFGref) => {this.onFeatureGroupReady(reactFGref);}}>
-                  <EditControl
-                    position='topright'
-                    onEdited={this.onEditPath}
-                    onCreated={this.onCreate}
-                    onDeleted={this.onDeleted}
-                    draw={{
-                        rectangle: false
-                    }}
-                  />
-                </FeatureGroup>);
-        }
-        let radio = '';
-        let login;
+        let fg,
+            radio,
+            login,
+            layerForm,
+            legend;
         if (this.state.isLoggedIn) {
             radio = (
                 <Form.Group>
@@ -289,23 +274,50 @@ class App extends Component {
                         name="logout">Logout ({this.state.username})
                 </Button>);
         } else {
+            radio = '';
             login = (<LoginForm login={this.login}/>);
         }
-        let layerForm;
         if (this.state.isLoggedIn && this.state.mode === 'Add') {
+            fg = (
+                <FeatureGroup ref={(reactFGref) =>
+                                   {this.onFeatureGroupReady(reactFGref);}
+                                  }>
+                  <EditControl
+                    position='topright'
+                    onEdited={this.onEditPath}
+                    onCreated={this.onCreate}
+                    onDeleted={this.onDeleted}
+                    draw={{
+                        rectangle: false
+                    }}
+                  />
+                </FeatureGroup>);
             layerForm = (
-                <LayerForm token={this.state.token}
+                <LayerForm tags={this.state.tags}
+                           token={this.state.token}
                            polygons={this.polygons}
                            endEdit={this.endEdit}
                            newLayer={this.newLayer}/>
             );
+            legend = (
+                <CreatorLegend token={this.state.token}
+                               layers={layers}
+                               mode={this.state.mode}
+                               deleteLayer={this.deleteLayer}/>
+            );
         } else {
+            fg = '';
             layerForm = (
                 <SearchTool colors={this.colors}
                             tags={this.state.tags}
                             creators={this.state.creators}
                             layers={this.state.layers}
                             addLayer={this.addLayer}/>
+            );
+            legend = (
+                <Legend layers={layers}
+                        mode={this.state.mode}
+                        removeLayer={this.removeLayer}/>
             );
         }
         return (
@@ -327,10 +339,7 @@ class App extends Component {
               <div className="right">
                 {layerForm}
                 <br/>
-                <Legend layers={layers}
-                        mode={this.state.mode}
-                        removeLayer={this.removeLayer}
-                        deleteLayer={this.deleteLayer}/>
+                {legend}
               </div>
             </div>
     );

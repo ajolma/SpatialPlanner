@@ -29,7 +29,17 @@ router.get("/layers", function(req, res) {
     if (!req.query.tag) {
         return res.status(400).json({"message": "tag missing"});
     }
-    layerModel.find({tags: req.query.tag}, function(err, layers) {
+    let query = {tags: req.query.tag};
+    if (req.query.tags) {
+        if (Array.isArray(req.query.tags)) {
+        } else {
+            query = {$and: [query, {tags: req.query.tags}]};
+        }
+    }
+    if (req.query.creator) {
+        query = {$and: [query, {creator: req.query.creator}]};
+    }
+    layerModel.find(query, function(err, layers) {
         if (err) {
             return res.status(409).json({"message": err});
         }

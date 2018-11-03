@@ -27,10 +27,10 @@ export default class SearchTool extends React.Component {
 
     onSubmit = (event) => {
         event.preventDefault();
+        let creator = this.state.creator ? this.state.creator : "any";
         let layer = {
             tag: this.state.tag,
             tags: this.state.tags,
-            creator: this.state.creator ? this.state.creator : "any",
             color: this.state.color ? this.state.color : this.props.colors.notUsed[0],
             geometries: []
         };
@@ -57,6 +57,7 @@ export default class SearchTool extends React.Component {
                             layer.geometries.push(data[i].geometries[j]);
                         }
                     }
+                    layer.creator = creator;
                     this.props.addLayer(layer);
                 });
             } else {
@@ -93,7 +94,7 @@ export default class SearchTool extends React.Component {
               <Form.Field>
                 <label>Tag</label>
                 <Dropdown name="tag"
-                          placeholder='Tag' fluid selection
+                          placeholder='Tag' fluid search selection
                           options={tags}
                           value={this.state.tag}
                           onChange={this.onChange2}/>
@@ -102,7 +103,7 @@ export default class SearchTool extends React.Component {
                 <label>Require additional tags</label>
                 <Dropdown name="tags"
                           key="tags"
-                          placeholder='Tags' fluid selection multiple
+                          placeholder='Tags' fluid search selection multiple
                           options={tags}
                           value={this.state.tags}
                           onChange={this.onChange2}/>
@@ -111,7 +112,7 @@ export default class SearchTool extends React.Component {
                 <label>Require creator</label>
                 <Dropdown name="creator"
                           key="creator"
-                          placeholder='Creator' fluid selection
+                          placeholder='Creator' fluid search selection
                           options={creators}
                           value={this.state.creator}
                           onChange={this.onChange2}/>
@@ -120,7 +121,7 @@ export default class SearchTool extends React.Component {
                 <label>Color for the layer</label>
                 <Dropdown name="color"
                           key="color"
-                          placeholder='Layer color' fluid selection
+                          placeholder='Layer color' fluid search selection
                           options={colors}
                           value={this.state.color}
                           onChange={this.onChange2}/>
