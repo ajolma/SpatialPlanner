@@ -8,7 +8,9 @@ let router = express.Router();
 // Layers API
 
 router.get("/layers", function(req, res) {
-    layerModel.find({}, function(err, layers) {
+    console.log(JSON.stringify(req.user));
+    let query = {creator: req.user};
+    layerModel.find(query, function(err, layers) {
         if (err) {
             return res.status(409).json({"message": err});
         }

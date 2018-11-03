@@ -39,6 +39,7 @@ router.get("/layers", function(req, res) {
     if (req.query.creator) {
         query = {$and: [query, {creator: req.query.creator}]};
     }
+    console.log(JSON.stringify(query));
     layerModel.find(query, function(err, layers) {
         if (err) {
             return res.status(409).json({"message": err});
