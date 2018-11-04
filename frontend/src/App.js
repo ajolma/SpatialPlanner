@@ -3,6 +3,7 @@ import './App.css';
 import { Form, Radio, Image, Button } from 'semantic-ui-react';
 import { Map, TileLayer, FeatureGroup, Polygon } from 'react-leaflet';
 import { EditControl } from "react-leaflet-draw";
+import openSocket from 'socket.io-client';
 import LoginForm from './components/LoginForm';
 import Legend from './components/Legend';
 import CreatorLegend from './components/CreatorLegend';
@@ -23,6 +24,7 @@ class App extends Component {
             tags: [], // all tags in database
             creators: [], // all (public?) creators in database
             layers: [], // {tag, tags, creator, geometries, color}
+            messageFromServer: "",
             // below is set only if logged in
             isLoggedIn: false,
             username: "",
@@ -146,7 +148,22 @@ class App extends Component {
         });
     }
 
+    onMessage = (message) => {
+        this.setState({
+            messageFromServer: message
+        });
+    }
+
     componentDidMount() {
+
+        let self = this;
+        const socket = openSocket('http://localhost:3001'); // TODO: set to proxy from package.json
+        socket.on('message', function(message) {
+            console.log("message: "+message);
+            self.onMessage(message);
+        });
+        socket.emit('subscribe to messages', 5000);
+        
         let obj = {
             method: "GET",
             mode: "cors",
