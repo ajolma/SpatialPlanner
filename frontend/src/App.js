@@ -24,7 +24,6 @@ class App extends Component {
             tags: [], // all tags in database
             creators: [], // all (public?) creators in database
             layers: [], // {tag, tags, creator, geometries, color}
-            messageFromServer: "",
             // below is set only if logged in
             isLoggedIn: false,
             username: "",
@@ -65,7 +64,8 @@ class App extends Component {
     deleteLayer = (layer_id) => {
         let change = false;
         let newLayers = [];
-        for (let i = 0; i < this.state.userLayers.lenght; i++) {
+        console.log("delete layer "+layer_id);
+        for (let i = 0; i < this.state.userLayers.length; i++) {
             if (this.state.userLayers[i]._id !== layer_id) {
                 newLayers.push(this.state.userLayers[i]);
             } else {
@@ -132,6 +132,19 @@ class App extends Component {
 
     addLayer = (layer) => {
         console.log("add layer");
+        //let self = this;
+        let socket = openSocket('http://localhost:3001'); // TODO: set to proxy from package.json
+        socket.emit('subscribe to channel', "ajolma,oil");
+        socket.on("message", function(message) {
+            console.log("message: "+message);
+            /*
+              if (message === 'new layer') {
+              self.maybeAddToLayer
+              } else {
+              self.maybeRemoveFromLayer
+              }
+            */
+        });
         let layers = this.state.layers;
         layers.push(layer);
         this.setState({
@@ -148,22 +161,8 @@ class App extends Component {
         });
     }
 
-    onMessage = (message) => {
-        this.setState({
-            messageFromServer: message
-        });
-    }
-
     componentDidMount() {
-
-        let self = this;
-        const socket = openSocket('http://localhost:3001'); // TODO: set to proxy from package.json
-        socket.on('message', function(message) {
-            console.log("message: "+message);
-            self.onMessage(message);
-        });
-        socket.emit('subscribe to messages', 5000);
-        
+               
         let obj = {
             method: "GET",
             mode: "cors",

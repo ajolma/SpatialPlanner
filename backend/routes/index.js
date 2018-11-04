@@ -18,6 +18,11 @@ router.get("/layers", function(req, res) {
     });
 });
 
+// room = "creator, tag"
+// tags in alphabetical order
+
+var io;
+
 router.post("/layers", function(req, res) {
     if (!req.body.tags || req.body.tags.length === 0 ||
         !req.body.geometries || req.body.geometries.length === 0) {
@@ -34,16 +39,33 @@ router.post("/layers", function(req, res) {
         if (err) {
             return res.status(409).json({"message": err});
         }
+
+        for (let i = 0; i < req.body.tags.length; i++) {
+            
+            let channel = req.user + ',' + req.body.tags[i];
+            console.log("new layer in channel " + channel);
+            io.to(channel).emit('message', 'new layer');
+            
+        }
         res.status(200).json({'message': 'success'});
     });
 });
 
 router.delete("/layers/:id", function(req, res) {
     layerModel.findById(req.params.id, function(err, layer) {
-        if (err) {
+        if (err || !layer) {
             return res.status(404).json({'message': 'not found'});
         }
         if (req.user === layer.creator) {
+
+            for (let i = 0; i < layer.tags.length; i++) {
+            
+                let channel = req.user + ',' + layer.tags[i];
+                console.log("layer deleted in channel " + channel);
+                io.to(channel).emit('message', 'layer deleted');
+                
+            }   
+            
             layerModel.deleteOne(
                 {"_id":req.params.id},
                 function(err) {
@@ -60,4 +82,9 @@ router.delete("/layers/:id", function(req, res) {
 
 // Tags API, horribly unoptimal
 
-module.exports = router;
+function exporter(_io) {
+    io = _io;
+    return router;
+}
+
+module.exports = exporter;

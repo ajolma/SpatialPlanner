@@ -4,7 +4,8 @@ import {Table, Message, Button} from 'semantic-ui-react';
 export default class CreatorLegend extends React.Component {
 
     deleteLayer = (e) => {
-        let id = this.props.layers[e.target.id]._id;
+        let id = e.target.id;
+        console.log("delete layer "+id);
         let obj = {
             method: "DELETE",
             mode: "cors",
@@ -32,8 +33,8 @@ export default class CreatorLegend extends React.Component {
                   <Table.Cell>{layer.tags.join(",")}</Table.Cell>
                   <Table.Cell>{layer.color}</Table.Cell>
                   <Table.Cell>
-                    <Button id={index}
-                            onClick={this.removeLayer}>
+                    <Button id={layer._id}
+                            onClick={this.deleteLayer}>
                       Delete
                     </Button>
                   </Table.Cell>

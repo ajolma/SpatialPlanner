@@ -3,7 +3,7 @@ var cors = require('cors');
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 let parser = require('body-parser');
-let router = require('./routes');
+let router = require('./routes')(io);
 const pub_router = require('./routes/pub_router');
 const mongoose = require('mongoose');
 const userModel = require('./models/user');
@@ -30,11 +30,9 @@ app.use("/", pub_router);
 io.on('connection', function(client) {
     console.log('a user connected');
     client.emit('message', 'Hello!');
-    client.on('subscribe to messages', (interval) => {
-        console.log('client is subscribing to messages with interval ', interval);
-        setInterval(() => {
-            client.emit('message', new Date());
-        }, interval);
+    client.on('subscribe to channel', (channel) => {
+        console.log('client is subscribing to channel ', channel);
+        client.join(channel);
     });
 });
 

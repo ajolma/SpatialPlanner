@@ -20,14 +20,17 @@ export default class LayerForm extends React.Component {
             let tag = newTags[i];
             tag = tag.replace(/^\s+/, '');
             tag = tag.replace(/\s+$/, '');
-            tags.push(tag);
-        }
-        for (let i = 0; i < this.state.selectedTags.length; i++) {
-            let tag = this.state.selectedTags[i];
-            if (tags.indexOf(tag) === -1) {
+            if (tag !== '') {
                 tags.push(tag);
             }
         }
+        for (let i = 0; i < this.state.selectedTags.length; i++) {
+            let tag = this.state.selectedTags[i];
+            if (tags.indexOf(tag) === -1 && tag !== '') {
+                tags.push(tag);
+            }
+        }
+        console.log("save layer, tags count = "+tags.length);
         let layer = {
             tags: tags,
             geometries: []
