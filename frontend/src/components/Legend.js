@@ -13,7 +13,7 @@ export default class Legend extends React.Component {
                 <Table.Row key={index}>
                   <Table.Cell>{layer.tag}</Table.Cell>
                   <Table.Cell>{layer.tags.join(",")}</Table.Cell>
-                  <Table.Cell>{layer.creator}</Table.Cell>
+                  <Table.Cell>{layer.creator ? layer.creator : 'any'}</Table.Cell>
                   <Table.Cell>{layer.color}</Table.Cell>
                   <Table.Cell>
                     <Button id={index}

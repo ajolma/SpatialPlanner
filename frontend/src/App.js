@@ -20,6 +20,7 @@ class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            // TODO: invent different names for viewed layers and created layers
             mode: "Browse",
             tags: [], // all tags in database
             creators: [], // all (public?) creators in database
@@ -28,17 +29,27 @@ class App extends Component {
             isLoggedIn: false,
             username: "",
             token: "",
-            userLayers: [] // {tags, geometries, color}
+            userLayers: [] // {_id, tags, geometries, color}
         };
     }
 
-    getUserLayers = () => {
+    getUserLayers = (data) => {
+        if (!data) {
+            data = {
+                isLoggedIn: this.state.isLoggedIn,
+                username: this.state.username,
+                token: this.state.token
+            };
+        }
+        if (!data.isLoggedIn) {
+            return;
+        }
         let obj = {
             method: "GET",
             mode: "cors",
             headers: {
                 "Content-Type":"application/json",
-                token: this.state.token
+                token: data.token
             }
         };
         fetch("/api/layers", obj).then((response) => { // 200-499
@@ -50,7 +61,11 @@ class App extends Component {
                     let newLayers = this.state.userLayers;
                     newLayers.push(...layers);
                     this.setState({
-                        userLayers: newLayers
+                        userLayers: newLayers,
+                        isLoggedIn: data.isLoggedIn,
+                        token: data.token,
+                        username: data.username,
+                        mode: data.mode
                     });
                 });
             } else {
@@ -114,6 +129,10 @@ class App extends Component {
     }
 
     newLayer = (layer) => {
+        this.polygons = [];
+        if (!layer) {
+            return;
+        }
         console.log("new layer");
         let tags = this.state.tags;
         for (let i = 0; i < layer.tags.length; i++) {
@@ -130,20 +149,125 @@ class App extends Component {
         });
     }
 
+    getLayer = (layer_id, then, args) => {
+        let obj = {
+            method: "GET",
+            mode: "cors",
+            headers: {"Content-Type":"application/json"}
+        };
+        fetch("/layers/" + layer_id, obj).then((response) => { // 200-499
+            if (response.ok) {
+                response.json().then((layer) => {
+                    then(layer, args);
+                });
+            } else {
+                console.log("Server responded with status: "+response.status);
+            }
+        }).catch((error) => { // 500-599
+            console.log(error);
+        });
+    }
+
+    layerMatches = (creatorLayer, args) => { // args = {myLayer, then}
+        // test that all tags in myLayer are in creatorLayer
+        // and that creatorLayer.creator === myLayer.creator if myLayer.creator
+        //   is defined
+        let matches = true;
+        if (creatorLayer.tags.indexOf(args.myLayer.tag) === -1) {
+            matches = false;
+        }
+        if (matches) {
+            for (let i = 0; i < args.myLayer.tags.length; i++) {
+                if (creatorLayer.tags.indexOf(args.myLayer.tags[i]) === -1) {
+                    matches = false;
+                    break;
+                }
+            }
+        }
+        if (matches && args.myLayer.creator) {
+            if (creatorLayer.creator !== args.myLayer.creator) {
+                matches = false;
+            }
+        }
+        if (matches) {
+            args.then(creatorLayer, args.myLayer);
+        }
+    }
+
+    maybeAddToLayer = (layer, add) => {
+        // layer is a browser layer (tag, tags, creator, geometries, color)
+        // add is a creator layer (_id, tags, creator) no geometries!
+        let self = this;
+        this.getLayer(add._id, this.layerMatches, {
+            myLayer: layer,
+            then: function(layerToAdd, hostLayer) {
+                // add layerToAdd into hostLayer
+                // and set layers to state
+                console.log("match, add");
+                let newLayers = self.state.layers;
+                let newSources = [];
+                let newGeometries = [];
+                for (let i = 0; i < hostLayer.geometries.length; i++) {
+                    newSources.push(hostLayer.sources[i]);
+                    newGeometries.push(hostLayer.geometries[i]);
+                }
+                for (let i = 0; i < layerToAdd.geometries.length; i++) {
+                    newSources.push(layerToAdd._id);
+                    newGeometries.push(layerToAdd.geometries[i]);
+                }
+                hostLayer.sources = newSources;
+                hostLayer.geometries = newGeometries;
+                self.setState({
+                    layers: newLayers
+                });
+            }
+        });
+    }
+
+    maybeRemoveFromLayer = (layer, remove) => {
+        let self = this;
+        this.layerMatches(remove, {
+            myLayer: layer,
+            then: function(a, b) {
+                console.log("match, remove");
+                let newLayers = self.state.layers;
+                // remove a from b
+                let newSources = [];
+                let newGeometries = [];
+                for (let i = 0; i < b.geometries.length; i++) {
+                    if (b.sources[i] !== a._id) {
+                        newSources.push(b.sources[i]);
+                        newGeometries.push(b.geometries[i]);
+                    }
+                }
+                b.sources = newSources;
+                b.geometries = newGeometries;
+                self.setState({
+                    layers: newLayers
+                });
+            }          
+        });
+    }
+
     addLayer = (layer) => {
         console.log("add layer");
-        //let self = this;
-        let socket = openSocket('http://localhost:3001'); // TODO: set to proxy from package.json
-        socket.emit('subscribe to channel', "ajolma,oil");
+        let self = this;
+        let socket = openSocket('http://localhost:3001');
+        // TODO: set to proxy from package.json
+        socket.emit('subscribe to channel', layer.creator + ',' + layer.tag);
         socket.on("message", function(message) {
-            console.log("message: "+message);
-            /*
-              if (message === 'new layer') {
-              self.maybeAddToLayer
-              } else {
-              self.maybeRemoveFromLayer
-              }
-            */
+            console.log('message from server: '+message);
+            let cmd = message.slice(0, 9);
+            if (cmd === "new layer") {
+                message = message.replace(/^new layer: /, '');
+                let add = JSON.parse(message);
+                self.maybeAddToLayer(layer, add);
+            }
+            if (cmd === "layer del") {
+                message = message.replace(/^layer deleted: /, '');
+                let remove = JSON.parse(message);
+                self.maybeRemoveFromLayer(layer, remove);
+            }
         });
         let layers = this.state.layers;
         layers.push(layer);
@@ -198,7 +322,7 @@ class App extends Component {
             let isLoggedIn = sessionStorage.getItem("isLoggedIn");
             let token = sessionStorage.getItem("token");
             let username = sessionStorage.getItem("username");
-            this.setState({
+            this.getUserLayers({
                 isLoggedIn: isLoggedIn === "true",
                 token: token,
                 username: username,

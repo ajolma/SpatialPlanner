@@ -39,15 +39,21 @@ router.post("/layers", function(req, res) {
         if (err) {
             return res.status(409).json({"message": err});
         }
-
+        let l = {
+            _id: layer._id,
+            creator: layer.creator,
+            tags: layer.tags
+        };
+        l = JSON.stringify(l);
         for (let i = 0; i < req.body.tags.length; i++) {
-            
-            let channel = req.user + ',' + req.body.tags[i];
+            let channel = req.body.tags[i];
             console.log("new layer in channel " + channel);
-            io.to(channel).emit('message', 'new layer');
-            
+            io.to(channel).emit('message', 'new layer: '+l);
+            channel = req.user + ',' + channel;
+            console.log("new layer in channel " + channel);
+            io.to(channel).emit('message', 'new layer: '+l);
         }
-        res.status(200).json({'message': 'success'});
+        res.status(200).json({message: 'success', _id: layer._id});
     });
 });
 
@@ -57,15 +63,20 @@ router.delete("/layers/:id", function(req, res) {
             return res.status(404).json({'message': 'not found'});
         }
         if (req.user === layer.creator) {
-
+            let l = {
+                _id: layer._id,
+                creator: layer.creator,
+                tags: layer.tags
+            };
+            l = JSON.stringify(l);
             for (let i = 0; i < layer.tags.length; i++) {
-            
-                let channel = req.user + ',' + layer.tags[i];
+                let channel = layer.tags[i];
                 console.log("layer deleted in channel " + channel);
-                io.to(channel).emit('message', 'layer deleted');
-                
+                io.to(channel).emit('message', 'layer deleted: '+l);
+                channel = req.user + ',' + channel;
+                console.log("layer deleted in channel " + channel);
+                io.to(channel).emit('message', 'layer deleted: '+l);
             }   
-            
             layerModel.deleteOne(
                 {"_id":req.params.id},
                 function(err) {

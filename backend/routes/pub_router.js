@@ -24,6 +24,15 @@ router.get("/creators", function(req, res) {
 
 // Layers API
 
+router.get("/layers/:id", function(req, res) {
+    layerModel.findById(req.params.id, function(err, layer) {
+        if (err || !layer) {
+            return res.status(404).json({'message': 'not found'});
+        }
+        res.status(200).json(layer);
+    });
+});
+
 router.get("/layers", function(req, res) {
     console.log(JSON.stringify(req.query));
     if (!req.query.tag) {

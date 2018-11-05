@@ -53,6 +53,19 @@ Additional features.
 
 User privacy.
 
+# Real time communication
+
+Real time communication between the client and the server is based on
+channels. A channel is a string "<tag>", or "<creator>,<tag>" if the
+channel is creator specific.
+
+The client subscribes to a channel using message "subscribe to
+channel" with the channel as an argument. When a creator creates or
+deletes a layer, the server sends either message "new layer:
+<layer_id>" or "layer deleted: <layer_id>" to all channels as there
+are tags in the layer (both creator specific and general). It is then
+the task of the client to act appropriately.
+
 # REST API
 
 ## Public API
@@ -75,6 +88,10 @@ response may be an empty array.
   * creator=string // optional, required creator
 * 200 response body = [layer]
 * 400 response body = {message:string}
+
+GET /layers/:id
+
+Get specified layer.
 
 POST /register
 

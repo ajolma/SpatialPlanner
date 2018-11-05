@@ -30,7 +30,7 @@ export default class CreatorLegend extends React.Component {
         let layers = this.props.layers.map((layer, index) => {
             return (
                 <Table.Row key={index}>
-                  <Table.Cell>{layer.tags.join(",")}</Table.Cell>
+                  <Table.Cell>{layer.tags.join(", ")}</Table.Cell>
                   <Table.Cell>{layer.color}</Table.Cell>
                   <Table.Cell>
                     <Button id={layer._id}

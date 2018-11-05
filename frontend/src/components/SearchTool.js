@@ -27,7 +27,6 @@ export default class SearchTool extends React.Component {
 
     onSubmit = (event) => {
         event.preventDefault();
-        let creator = this.state.creator ? this.state.creator : "any";
         let layer = {
             tag: this.state.tag,
             tags: this.state.tags,
@@ -51,13 +50,18 @@ export default class SearchTool extends React.Component {
         }
         fetch(url, obj).then((response) => { // 200-499
             if (response.ok) {
-                response.json().then((data) => {
-                    for (let i = 0; i < data.length; i++) {
-                        for (let j = 0; j < data[i].geometries.length; j++) {
-                            layer.geometries.push(data[i].geometries[j]);
+                response.json().then((layers) => {
+                    layer.sources = [];
+                    for (let i = 0; i < layers.length; i++) {
+                        // add the source _ids
+                        for (let j = 0; j < layers[i].geometries.length; j++) {
+                            layer.sources.push(layers[i]._id);
+                            layer.geometries.push(layers[i].geometries[j]);
                         }
                     }
-                    layer.creator = creator;
+                    if (this.state.creator !== '') {
+                        layer.creator = this.state.creator;
+                    }
                     this.props.addLayer(layer);
                 });
             } else {
@@ -73,6 +77,7 @@ export default class SearchTool extends React.Component {
             (tag, i) => {return {key: i, text: tag, value: tag};});
         let creators = this.props.creators.map(
             (creator, i) => {return {key: i, text: creator, value: creator};});
+        creators.unshift({key: -1, text: '', value: ''});
         let colors = [];
         this.props.colors.notUsed = [];
         for (let i = 0; i < this.props.colors.all.length; i++) {

@@ -53,15 +53,19 @@ export default class LayerForm extends React.Component {
         fetch("/api/layers", obj).then((response) => { // 200-499
             if (response.ok) {
                 response.json().then((data) => {
+                    console.log(data);
+                    layer._id = data._id;
                     this.props.newLayer(layer);
                 });
             } else {
                 response.json().then((data) => {
                     alert("Server responded: "+data.message);
                 });
+                this.props.newLayer();
             }
         }).catch((error) => { // 500-599
             console.log(error);
+            this.props.newLayer();
         });
     }
 
