@@ -10,10 +10,24 @@ const userModel = require('./models/user');
 const bcrypt = require('bcrypt-nodejs');
 const login = require('./routes/login')({userModel: userModel});
 
-mongoose.connect('mongodb://localhost/spatialplanner').then(
-    () => {console.log("MongoDB connection success");},
-    (error) => {console.log("MongoDB connection failure:"+error);}
-);
+let port;
+if (process.env.MONGODB_USER) {
+    // Heroku + MongoDB Atlas
+    console.log("At Heroku");
+    let user = process.env.MONGODB_USER;
+    let url = 'mongodb+srv://' + user + '@cluster0-fbtbl.mongodb.net';
+    mongoose.connect(url, {dbName: 'spatialplanner'}).then(
+        () => {console.log("MongoDB connection success");},
+        (error) => {console.log("MongoDB connection failure:"+error);}
+    );
+    port = process.env.PORT;
+} else {
+    mongoose.connect('mongodb://localhost/spatialplanner').then(
+        () => {console.log("MongoDB connection success");},
+        (error) => {console.log("MongoDB connection failure:"+error);}
+    );
+    port = 3001;
+}
 
 app.use(cors());
 
@@ -36,7 +50,6 @@ io.on('connection', function(client) {
     });
 });
 
-//app.listen(3001);
-http.listen(3001);
+http.listen(port);
 
-console.log("Running at port 3001");
+console.log("Listening on portport "+port);
