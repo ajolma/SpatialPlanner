@@ -1,5 +1,5 @@
 import React from 'react';
-import {Form,Button,Dropdown} from 'semantic-ui-react';
+import {Message, Form, Button, Dropdown} from 'semantic-ui-react';
 import {backend} from '../config';
 
 export default class SearchTool extends React.Component {
@@ -97,6 +97,10 @@ export default class SearchTool extends React.Component {
         }
         return (
             <Form>
+              <Message>
+                <Message.Header>Add and subscribe to a layer</Message.Header>
+                This is the tool to add and subscribe to layers.
+              </Message>
               <Form.Field>
                 <label>Tag</label>
                 <Dropdown name="tag"
@@ -133,7 +137,7 @@ export default class SearchTool extends React.Component {
                           onChange={this.onChange2}/>
               </Form.Field>
               <Button onClick={this.onSubmit}
-                      name="save">Add layer</Button>
+                      name="save">Add/Subscribe</Button>
             </Form>
         );
     }

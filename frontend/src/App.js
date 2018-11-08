@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import './App.css';
-import { Form, Radio, Image, Button } from 'semantic-ui-react';
+import { Menu, Image, Input, Button } from 'semantic-ui-react';
 import { Map, TileLayer, FeatureGroup, Polygon } from 'react-leaflet';
 import { EditControl } from "react-leaflet-draw";
 import openSocket from 'socket.io-client';
@@ -40,12 +40,15 @@ class App extends Component {
     }
 
     getUserLayers = (data) => {
+        console.log('getUserLayers');
+        console.log(data);
         if (!data) {
             data = {
                 isLoggedIn: this.state.isLoggedIn,
                 username: this.state.username,
                 token: this.state.token
             };
+            return;
         }
         if (!data.isLoggedIn) {
             return;
@@ -100,10 +103,10 @@ class App extends Component {
         }
     }
 
-    changeMode = (e, {value}) => {
-        console.log(value);
+    changeMode = (e) => {
+        console.log('changeMode to ' + e.target.textContent);
         this.setState({
-            mode: value
+            mode: e.target.textContent
         });
     }
 
@@ -292,7 +295,7 @@ class App extends Component {
     }
 
     componentDidMount() {
-               
+        console.log('componentDidMount');
         let obj = {
             method: "GET",
             mode: "cors",
@@ -393,34 +396,29 @@ class App extends Component {
             polygons.push(...polygons_in_layer);
         }
         let fg,
-            radio,
+            b1, b2,
             login,
             layerForm,
             legend;
         if (this.state.isLoggedIn) {
-            radio = (
-                <Form.Group>
-                  <Form.Field>
-                    <Radio label='Add'
-                           name='radioGroup'
-                           value='Add'
-                           checked={this.state.mode === 'Add'}
-                           onChange={this.changeMode}/>
-                  </Form.Field>
-                  <Form.Field>
-                    <Radio label='Browse'
-                           name='radioGroup'
-                           value='Browse'
-                           checked={this.state.mode === 'Browse'}
-                           onChange={this.changeMode}/>
-                  </Form.Field>
-                </Form.Group>);
+            b1 = (
+                <Menu.Item name='Add'
+                           active={this.state.mode === 'Add'}
+                           onClick={this.changeMode}/>
+            );
+            b2 = (
+                <Menu.Item name='Browse'
+                           active={this.state.mode === 'Browse'}
+                           onClick={this.changeMode}/>
+            );
             login = (
-                <Button onClick={this.logout}
-                        name="logout">Logout ({this.state.username})
-                </Button>);
+                <Menu.Menu position='right'>
+                  <Menu.Item name='Logout'
+                             onClick={this.logout}/>
+                </Menu.Menu>);
         } else {
-            radio = '';
+            b1 = '';
+            b2 = '';
             login = (<LoginForm login={this.login}/>);
         }
         if (this.state.isLoggedIn && this.state.mode === 'Add') {
@@ -468,21 +466,20 @@ class App extends Component {
         }
         return (
             <div className="App">
-              <Form>
-                <Form.Group>
-                  <Form.Field>
-                    <Image src='logo.png'/>
-                  </Form.Field>
-                  {radio}
-                  {login}
-                </Form.Group>
-              </Form>
+              <Menu>
+                <Menu.Item>
+                  <Image src='logo.png'/>
+                </Menu.Item>
+                {b1}
+                {b2}
+                {login}
+              </Menu>
               <Map center={position} zoom={10}>
                 <TileLayer url={tiles.url} attribution={tiles.attribution}/>
                 {polygons}
                 {fg}
               </Map>
-              <div className="right">
+              <div className="myright">
                 {layerForm}
                 <br/>
                 {legend}

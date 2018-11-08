@@ -1,5 +1,5 @@
 import React from 'react';
-import {Form,Button} from 'semantic-ui-react';
+import {Menu, Input, Button} from 'semantic-ui-react';
 import {backend} from '../config';
 
 export default class LoginForm extends React.Component {
@@ -79,26 +79,30 @@ export default class LoginForm extends React.Component {
     
     render() {
         return (
-            <Form.Group>
-              <Form.Field>
-                <label>Username</label>
-                <input type="text"
+            <Menu.Menu position='right'>
+              <Menu.Item>
+                <Input type="text"
+                       placeholder="username"
                        name="username"
                        value={this.state.username}
                        onChange={this.onChange}/>
-              </Form.Field>
-              <Form.Field>
-                <label>Password</label>
-                <input type="password"
+              </Menu.Item>
+              <Menu.Item>
+                <Input type="password"
+                       placeholder="password"
                        name="password"
                        value={this.state.password}
                        onChange={this.onChange}/>
-              </Form.Field>
-              <Button onClick={this.onSubmit}
-                      name="register">Register</Button>
-              <Button onClick={this.onSubmit}
-                      name="login">Login</Button>
-            </Form.Group>
+              </Menu.Item>
+              <Menu.Item>
+                <Button onClick={this.onSubmit}
+                        name="register">Register</Button>
+              </Menu.Item>
+              <Menu.Item>
+                <Button onClick={this.onSubmit}
+                        name="login">Login</Button>
+              </Menu.Item>
+            </Menu.Menu>
         );
     }
     
