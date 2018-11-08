@@ -9,6 +9,7 @@ import Legend from './components/Legend';
 import CreatorLegend from './components/CreatorLegend';
 import LayerForm from './components/LayerForm';
 import SearchTool from './components/SearchTool';
+import {backend, setBackend} from './config';
 
 class App extends Component {
 
@@ -18,6 +19,11 @@ class App extends Component {
     }
 
     constructor(props) {
+        if (window.origin === 'http://localhost:3000') {
+            setBackend('http://localhost:3001');
+        } else {
+            setBackend('https://spatial-planner-backend.herokuapp.com');
+        }
         super(props);
         this.state = {
             // TODO: invent different names for viewed layers and created layers
@@ -52,7 +58,7 @@ class App extends Component {
                 token: data.token
             }
         };
-        fetch("/api/layers", obj).then((response) => { // 200-499
+        fetch(backend + "/api/layers", obj).then((response) => { // 200-499
             if (response.ok) {
                 response.json().then((layers) => {
                     for (let i = 0; i < layers.length; i++) {
@@ -155,7 +161,7 @@ class App extends Component {
             mode: "cors",
             headers: {"Content-Type":"application/json"}
         };
-        fetch("/layers/" + layer_id, obj).then((response) => { // 200-499
+        fetch(backend + "/layers/" + layer_id, obj).then((response) => { // 200-499
             if (response.ok) {
                 response.json().then((layer) => {
                     then(layer, args);
@@ -292,7 +298,7 @@ class App extends Component {
             mode: "cors",
             headers: {"Content-Type":"application/json"}
         };
-        fetch("/tags", obj).then((response) => { // 200-499
+        fetch(backend + "/tags", obj).then((response) => { // 200-499
             if (response.ok) {
                 response.json().then((data) => {
                     this.setState({
@@ -305,7 +311,7 @@ class App extends Component {
         }).catch((error) => { // 500-599
             console.log(error);
         });
-        fetch("/creators", obj).then((response) => { // 200-499
+        fetch(backend + "/creators", obj).then((response) => { // 200-499
             if (response.ok) {
                 response.json().then((data) => {
                     this.setState({
@@ -365,7 +371,7 @@ class App extends Component {
         });
         this.endEdit();
         this.setSessionStorage(false, "", "");
-        fetch("/logout", obj).then((response) => { // 200-499
+        fetch(backend + "/logout", obj).then((response) => { // 200-499
         }).catch((error) => { // 500-599
             console.log(error);
         });

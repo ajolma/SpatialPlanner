@@ -1,5 +1,6 @@
 import React from 'react';
 import {Form,Button,Dropdown} from 'semantic-ui-react';
+import {backend} from '../config';
 
 export default class SearchTool extends React.Component {
 
@@ -48,7 +49,7 @@ export default class SearchTool extends React.Component {
         if (layer.creator) {
             url += "&creator=" + layer.creator;
         }
-        fetch(url, obj).then((response) => { // 200-499
+        fetch(backend + url, obj).then((response) => { // 200-499
             if (response.ok) {
                 response.json().then((layers) => {
                     layer.sources = [];

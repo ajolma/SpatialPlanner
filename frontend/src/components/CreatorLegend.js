@@ -1,5 +1,6 @@
 import React from 'react';
 import {Table, Message, Button} from 'semantic-ui-react';
+import {backend} from '../config';
 
 export default class CreatorLegend extends React.Component {
 
@@ -14,7 +15,7 @@ export default class CreatorLegend extends React.Component {
                 token: this.props.token
             }
         };
-        fetch("/api/layers/" + id, obj).then((response) => { // 200-499
+        fetch(backend + "/api/layers/" + id, obj).then((response) => { // 200-499
             if (response.ok) {
                 this.props.deleteLayer(id);
             } else {

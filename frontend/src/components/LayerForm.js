@@ -1,5 +1,6 @@
 import React from 'react';
 import {Form, Message, Label, Dropdown, Input, Button} from 'semantic-ui-react';
+import {backend} from '../config';
 
 export default class LayerForm extends React.Component {
 
@@ -50,7 +51,7 @@ export default class LayerForm extends React.Component {
             },
             body:JSON.stringify(layer)
         };
-        fetch("/api/layers", obj).then((response) => { // 200-499
+        fetch(backend + "/api/layers", obj).then((response) => { // 200-499
             if (response.ok) {
                 response.json().then((data) => {
                     console.log(data);

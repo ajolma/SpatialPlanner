@@ -1,5 +1,6 @@
 import React from 'react';
 import {Form,Button} from 'semantic-ui-react';
+import {backend} from '../config';
 
 export default class LoginForm extends React.Component {
 
@@ -18,7 +19,7 @@ export default class LoginForm extends React.Component {
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify(user)
         };
-        fetch("/register", obj).then((response) => { // 200-499
+        fetch(backend + "/register", obj).then((response) => { // 200-499
             if (response.ok) {
                 alert("OK");
             }
@@ -37,7 +38,7 @@ export default class LoginForm extends React.Component {
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify(user)
         };
-        fetch("/login", obj).then((response) => { // 200-499
+        fetch(backend + "/login", obj).then((response) => { // 200-499
             if (response.ok) {
                 response.json().then((data) => {
                     this.props.login({
