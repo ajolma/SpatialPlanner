@@ -261,7 +261,7 @@ class App extends Component {
     addLayer = (layer) => {
         console.log("add layer");
         let self = this;
-        let socket = openSocket('http://localhost:3001');
+        let socket = openSocket(backend);
         // TODO: set to proxy from package.json
         socket.emit('subscribe to channel', layer.creator + ',' + layer.tag);
         socket.on("message", function(message) {
