@@ -53,12 +53,17 @@ export default class SearchTool extends React.Component {
             if (response.ok) {
                 response.json().then((layers) => {
                     layer.sources = [];
+                    layer.srcInfo = [];
                     for (let i = 0; i < layers.length; i++) {
                         // add the source _ids
                         for (let j = 0; j < layers[i].geometries.length; j++) {
                             layer.sources.push(layers[i]._id);
                             layer.geometries.push(layers[i].geometries[j]);
                         }
+                        layer.srcInfo[layers[i]._id] = {
+                            tags: layers[i].tags,
+                            creator: layers[i].creator
+                        };
                     }
                     if (this.state.creator !== '') {
                         layer.creator = this.state.creator;

@@ -96,11 +96,11 @@ export default class LoginForm extends React.Component {
               </Menu.Item>
               <Menu.Item>
                 <Button onClick={this.onSubmit}
-                        name="register">Register</Button>
+                        name="register">register</Button>
               </Menu.Item>
               <Menu.Item>
                 <Button onClick={this.onSubmit}
-                        name="login">Login</Button>
+                        name="login">login</Button>
               </Menu.Item>
             </Menu.Menu>
         );

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import './App.css';
-import { Menu, Image, Input, Button } from 'semantic-ui-react';
-import { Map, TileLayer, FeatureGroup, Polygon } from 'react-leaflet';
+import { Menu, Image } from 'semantic-ui-react';
+import { Map, TileLayer, FeatureGroup, Polygon, Popup } from 'react-leaflet';
 import { EditControl } from "react-leaflet-draw";
 import openSocket from 'socket.io-client';
 import LoginForm from './components/LoginForm';
@@ -32,7 +32,6 @@ class App extends Component {
             creators: [], // all (public?) creators in database
             layers: [], // {tag, tags, creator, geometries, color}
             // below is set only if logged in
-            isLoggedIn: false,
             username: "",
             token: "",
             userLayers: [] // {_id, tags, geometries, color}
@@ -44,13 +43,12 @@ class App extends Component {
         console.log(data);
         if (!data) {
             data = {
-                isLoggedIn: this.state.isLoggedIn,
                 username: this.state.username,
                 token: this.state.token
             };
             return;
         }
-        if (!data.isLoggedIn) {
+        if (data.username === "") {
             return;
         }
         let obj = {
@@ -71,7 +69,6 @@ class App extends Component {
                     newLayers.push(...layers);
                     this.setState({
                         userLayers: newLayers,
-                        isLoggedIn: data.isLoggedIn,
                         token: data.token,
                         username: data.username,
                         mode: data.mode
@@ -227,6 +224,10 @@ class App extends Component {
                 }
                 hostLayer.sources = newSources;
                 hostLayer.geometries = newGeometries;
+                hostLayer.srcInfo[layerToAdd._id] = {
+                    tags: layerToAdd.tags,
+                    creator: layerToAdd.creator
+                };
                 self.setState({
                     layers: newLayers
                 });
@@ -261,6 +262,7 @@ class App extends Component {
 
     addLayer = (layer) => {
         console.log("add layer");
+        console.log(layer);
         let self = this;
         let socket = openSocket(backend);
         // TODO: set to proxy from package.json
@@ -288,7 +290,7 @@ class App extends Component {
         this.setState({
             layers: layers
         });
-        
+        console.log(layers);
     }
 
     removeLayer = (layer_index) => {
@@ -332,29 +334,25 @@ class App extends Component {
         }).catch((error) => { // 500-599
             console.log(error);
         });
-        if (sessionStorage.getItem("isLoggedIn")) {
-            let isLoggedIn = sessionStorage.getItem("isLoggedIn");
+        let username = sessionStorage.getItem("username");
+        if (username && username !== "") {
             let token = sessionStorage.getItem("token");
-            let username = sessionStorage.getItem("username");
             this.getUserLayers({
-                isLoggedIn: isLoggedIn === "true",
                 token: token,
                 username: username,
-                mode: isLoggedIn === "true" ? "Add" : "Browse"
+                mode: "Add"
             });
         }
     }
 
-    setSessionStorage = (isLoggedIn, token, username) => {
-        sessionStorage.setItem("isLoggedIn", isLoggedIn ? "true" : "false");
+    setSessionStorage = (token, username) => {
         sessionStorage.setItem("token", token);
         sessionStorage.setItem("username", username);
     }
     
     login = (data) => {
-        data.isLoggedIn = true;
         data.mode = "Add";
-        this.setSessionStorage(true, data.token, data.username);
+        this.setSessionStorage(data.token, data.username);
         this.getUserLayers(data);
     }
 
@@ -368,13 +366,12 @@ class App extends Component {
             },
         };
         this.setState({
-            isLoggedIn: false,
             username: "",
             token: "",
             userLayers: []
         });
         this.endEdit();
-        this.setSessionStorage(false, "", "");
+        this.setSessionStorage("", "");
         fetch(backend + "/logout", obj).then((response) => { // 200-499
         }).catch((error) => { // 500-599
             console.log(error);
@@ -388,12 +385,24 @@ class App extends Component {
         };
         let position = [60, 25];
         let polygons = [];
-        let layers = this.state.mode === 'Add' ? this.state.userLayers : this.state.layers;
+        let layers = (this.state.username !== '' && this.state.mode === 'Add') ?
+            this.state.userLayers :
+            this.state.layers;
         for (let i = 0; i < layers.length; i++) {
+            console.log(layers[i]);
+            let info = layers[i].srcInfo;
             let polygons_in_layer = layers[i].geometries.map(
-                (item, index) => <Polygon key={i+"."+index}
-                                          color={layers[i].color}
-                                          positions={item.coordinates} />);
+                (item, index) =>
+                    <Polygon key={i+"."+index}
+                             color={layers[i].color}
+                             positions={item.coordinates}>
+                      <Popup>
+                        <span>{info ?
+                               JSON.stringify(info[layers[i].sources[index]]) :
+                               JSON.stringify(layers[i].tags)}</span>
+                      </Popup>
+                    </Polygon>
+            );
             polygons.push(...polygons_in_layer);
         }
         let fg,
@@ -401,7 +410,7 @@ class App extends Component {
             login,
             layerForm,
             legend;
-        if (this.state.isLoggedIn) {
+        if (this.state.username !== "") {
             b1 = (
                 <Menu.Item name='Add'
                            active={this.state.mode === 'Add'}
@@ -412,9 +421,16 @@ class App extends Component {
                            active={this.state.mode === 'Browse'}
                            onClick={this.changeMode}/>
             );
+            console.log(this.state.username);
+            let name = 'Logout ' + this.state.username;
+            console.log(name);
+            var divStyle = {
+                textTransform: 'lowercase'
+            };
             login = (
                 <Menu.Menu position='right'>
-                  <Menu.Item name='Logout'
+                  <Menu.Item name={name}
+                             style={divStyle}
                              onClick={this.logout}/>
                 </Menu.Menu>);
         } else {
@@ -422,7 +438,7 @@ class App extends Component {
             b2 = '';
             login = (<LoginForm login={this.login}/>);
         }
-        if (this.state.isLoggedIn && this.state.mode === 'Add') {
+        if (this.state.username !== "" && this.state.mode === 'Add') {
             fg = (
                 <FeatureGroup ref={(reactFGref) =>
                                    {this.onFeatureGroupReady(reactFGref);}
