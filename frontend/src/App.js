@@ -198,6 +198,7 @@ class App extends Component {
                 matches = false;
             }
         }
+        console.log("matches:"+matches);
         if (matches) {
             args.then(creatorLayer, args.myLayer);
         }
@@ -263,7 +264,11 @@ class App extends Component {
         let self = this;
         let socket = openSocket(backend);
         // TODO: set to proxy from package.json
-        socket.emit('subscribe to channel', layer.creator + ',' + layer.tag);
+        let channel = layer.tag;
+        if (layer.creator) {
+            channel = layer.creator + ',' + channel;
+        }
+        socket.emit('subscribe to channel', channel);
         socket.on("message", function(message) {
             console.log('message from server: '+message);
             let cmd = message.slice(0, 9);
@@ -347,14 +352,10 @@ class App extends Component {
     }
     
     login = (data) => {
-        this.setState({
-            isLoggedIn: true,
-            username: data.username,
-            token: data.token,
-            mode: "Add"
-        });
+        data.isLoggedIn = true;
+        data.mode = "Add";
         this.setSessionStorage(true, data.token, data.username);
-        this.getUserLayers();
+        this.getUserLayers(data);
     }
 
     logout = () => {
