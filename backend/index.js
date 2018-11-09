@@ -52,4 +52,4 @@ io.on('connection', function(client) {
 
 http.listen(port);
 
-console.log("Listening on portport "+port);
+console.log("Listening on port "+port);
