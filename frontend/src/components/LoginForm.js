@@ -16,6 +16,7 @@ export default class LoginForm extends React.Component {
         let obj = {
             method:"POST",
             mode:"cors",
+            credentials: 'include',
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify(user)
         };
@@ -35,6 +36,7 @@ export default class LoginForm extends React.Component {
         let obj = {
             method:"POST",
             mode:"cors",
+            credentials: 'include',
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify(user)
         };

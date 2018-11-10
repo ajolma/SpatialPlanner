@@ -10,6 +10,7 @@ export default class CreatorLegend extends React.Component {
         let obj = {
             method: "DELETE",
             mode: "cors",
+            credentials: 'include',
             headers: {
                 "Content-Type":"application/json",
                 token: this.props.token
@@ -46,7 +47,7 @@ export default class CreatorLegend extends React.Component {
             <div>
               <Message>
                 <Message.Header>Layers</Message.Header>
-                This the the list of your layers in the database.
+                This the list of your layers in the database.
               </Message>
               <Table celled>
                 <Table.Header>

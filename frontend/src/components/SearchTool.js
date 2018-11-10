@@ -37,6 +37,7 @@ export default class SearchTool extends React.Component {
         let obj = {
             method: "GET",
             mode: "cors",
+            credentials: 'include',
             headers: {
                 "Content-Type":"application/json"
                 //"token":this.props.token if the user wants her own layers

@@ -45,6 +45,7 @@ export default class LayerForm extends React.Component {
         let obj = {
             method:"POST",
             mode:"cors",
+            credentials: 'include',
             headers:{
                 "Content-Type":"application/json",
                 "token":this.props.token

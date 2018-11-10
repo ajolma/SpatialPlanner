@@ -54,6 +54,7 @@ class App extends Component {
         let obj = {
             method: "GET",
             mode: "cors",
+            credentials: 'include',
             headers: {
                 "Content-Type":"application/json",
                 token: data.token
@@ -159,6 +160,7 @@ class App extends Component {
         let obj = {
             method: "GET",
             mode: "cors",
+            credentials: 'include',
             headers: {"Content-Type":"application/json"}
         };
         fetch(backend + "/layers/" + layer_id, obj).then((response) => { // 200-499
@@ -306,6 +308,7 @@ class App extends Component {
         let obj = {
             method: "GET",
             mode: "cors",
+            credentials: 'include',
             headers: {"Content-Type":"application/json"}
         };
         fetch(backend + "/tags", obj).then((response) => { // 200-499
@@ -360,6 +363,7 @@ class App extends Component {
         let obj = {
             method:"POST",
             mode:"cors",
+            credentials: 'include',
             headers:{
                 "Content-Type":"application/json",
                 token:this.state.token
