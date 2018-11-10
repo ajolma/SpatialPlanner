@@ -8,8 +8,7 @@ let router = express.Router();
 // Layers API
 
 router.get("/layers", function(req, res) {
-    console.log(JSON.stringify(req.user));
-    let query = {creator: req.user};
+    let query = {creator: req.user.username};
     layerModel.find(query, function(err, layers) {
         if (err) {
             return res.status(409).json({"message": err});
@@ -31,7 +30,7 @@ router.post("/layers", function(req, res) {
             "Cowardly refusing to create layers without tags and/or geometries."});
     }
     let layer = new layerModel({
-        creator: req.user,
+        creator: req.user.username,
         tags: req.body.tags,
         geometries: req.body.geometries
     });
@@ -49,7 +48,7 @@ router.post("/layers", function(req, res) {
             let channel = req.body.tags[i];
             console.log("new layer in channel " + channel);
             io.to(channel).emit('message', 'new layer: '+l);
-            channel = req.user + ',' + channel;
+            channel = req.user.username + ',' + channel;
             console.log("new layer in channel " + channel);
             io.to(channel).emit('message', 'new layer: '+l);
         }
@@ -62,7 +61,7 @@ router.delete("/layers/:id", function(req, res) {
         if (err || !layer) {
             return res.status(404).json({'message': 'not found'});
         }
-        if (req.user === layer.creator) {
+        if (req.user.username === layer.creator) {
             let l = {
                 _id: layer._id,
                 creator: layer.creator,
@@ -73,7 +72,7 @@ router.delete("/layers/:id", function(req, res) {
                 let channel = layer.tags[i];
                 console.log("layer deleted in channel " + channel);
                 io.to(channel).emit('message', 'layer deleted: '+l);
-                channel = req.user + ',' + channel;
+                channel = req.user.username + ',' + channel;
                 console.log("layer deleted in channel " + channel);
                 io.to(channel).emit('message', 'layer deleted: '+l);
             }   
