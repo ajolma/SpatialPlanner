@@ -22,6 +22,9 @@ function createToken() {
 
 function Login(args) {
     this.userModel = args.userModel;
+    this.Unauthorized = "wrong username or password";
+    this.Conflict = "username already in use";
+    this.Forbidden = "not allowed";
 }
 
 Login.prototype = {
@@ -32,7 +35,7 @@ Login.prototype = {
                 !req.body.password ||
                 req.body.password.length == 0 ||
                 req.body.password.length == 0) {
-                return res.status(409).json({"message": "username already in use"});
+                return res.status(409).json({message: self.Conflict});
             }
             let user = new self.userModel({
                 username: req.body.username,
@@ -40,11 +43,39 @@ Login.prototype = {
             });
             user.save(function(err, item) {
                 if (err) {
-                    return res.status(409).json({"message": "username already in use"});
+                    return res.status(409).json({message: self.Conflict});
                 }
-                console.log("register ok "+item.username);
-                res.status(200).json({"message": "success"});
+                res.status(200).json({message: "success"});
             });
+        }
+    },
+    login: function () {
+        let self = this;
+        return function(req, res, next) {
+            passport.authenticate('local-login', function(err, user, info) {
+                if (err || !user) {
+                    return res.status(401).json({message: self.Unauthorized});
+                }
+                req.logIn(user, function(err) {
+                    if (err) {
+                        return res.status(401).json({message: self.Unauthorized});
+                    }
+                    return res.status(200).json({
+                        message: 'success',
+                        token: req.session.token
+                    });
+                });
+            })(req, res, next);
+        };                   
+    },
+    logout: function () {
+        let self = this;
+        return function(req, res, next) {
+            if (req.session) {
+                req.logout();
+                return res.status(200).json({message: "success"});
+            }
+            res.status(404).json({"message": "not found"});
         }
     },
     initialize: function() {
@@ -56,19 +87,21 @@ Login.prototype = {
     authenticate: function(a, b) {
         return passport.authenticate(a, b);
     },
-    isUserLogged: function (req, res, next) {
-        let token = req.headers.token;
-        if (req.isAuthenticated()) {
-            if (token === req.session.token) {
-                return next();
+    isUserLogged: function() {
+        let self = this;
+        return function (req, res, next) {
+            let token = req.headers.token;
+            if (req.isAuthenticated()) {
+                if (token === req.session.token) {
+                    return next();
+                }
             }
+            res.status(403).json({message: self.Forbidden});
         }
-        res.status(403).json({"message": "not allowed"});
     },
     getUsers: function() {
         let self = this;
         return function(req, res) {
-            //isUserLogged(req, res, function() {
                 self.userModel.find({}, 'username', function(err, users) {
                     let u = [];
                     for (let i = 0; i < users.length; i++) {
@@ -76,7 +109,6 @@ Login.prototype = {
                     }
                     res.status(200).json(u);
                 });
-            //});
         }
     }
 };
@@ -87,11 +119,9 @@ var login = function(args) {
     if (!singleton) {
         singleton = new Login(args);
         passport.serializeUser(function(user, done) {
-            console.log('Serialize user:'+JSON.stringify(user));
             done(null, user._id);
         });
         passport.deserializeUser(function(_id, done) {
-            console.log('Deserialize user:'+_id);
             args.userModel.findById(_id, function(err, user) {
                 if (err || !user) {
                     return done(err || 'not found');
@@ -112,13 +142,13 @@ var login = function(args) {
                         !req.body.password ||
                         req.body.password.length == 0 ||
                         req.body.password.length == 0) {
-                        return done(null, false, "Wrong username or password");
+                        return done(null, false, "bad credentials");
                     }
                     args.userModel.findOne(
                         {username: req.body.username},
                         function(err, user) {
-                            if (err) {
-                                return done(err);
+                            if (err || !user) {
+                                return done(err || 'not user');
                             }
                             if (isPasswdValid(req.body.password, user.password)) {
                                 console.log("login "+user.username);
@@ -127,7 +157,7 @@ var login = function(args) {
                                 req.session.username = username;
                                 return done(null, user);
                             }
-                            return done(null, false, "Wrong username or password");
+                            return done(null, false, "password not valid");
                         });
                 }));
     }

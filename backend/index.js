@@ -32,7 +32,7 @@ const session = require('express-session');
 const mongoStore = require('connect-mongo')(session);
 
 var corsOptions = {
-    methods: ['OPTIONS', 'POST', 'GET'],
+    methods: ['OPTIONS', 'DELETE', 'POST', 'GET'],
     origin: true,
     credentials: true
 };
@@ -53,25 +53,13 @@ app.use(session({
 app.use(login.initialize());
 app.use(login.session());
 app.use(parser.json());
-app.use("/api", login.isUserLogged, router);
+app.use("/api", login.isUserLogged(), router);
 app.use("/", pub_router);
 
 app.get("/users", login.getUsers());
 app.post("/register", login.register());
-app.post("/login",
-         login.authenticate('local-login', {failureRedirect: '/'}),
-         function(req, res) {
-             res.status(200).json({message: 'success',
-                                   token: req.session.token});
-         });
-app.post("/logout",
-         function(req, res) {
-             if (req.session) {
-                 req.logout();
-                 return res.status(200).json({message: "success"});
-             }
-             res.status(404).json({"message": "not found"});
-         });
+app.post("/login", login.login());
+app.post("/logout", login.logout());
 
 io.on('connection', function(client) {
     console.log('a user connected');
