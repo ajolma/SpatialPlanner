@@ -6,11 +6,13 @@ import {removeViewerLayer} from '../actions/viewerActions';
 class Legend extends React.Component {
 
     removeLayer = (e) => {
-        this.props.dispatch(removeViewerLayer(e.target.id));
+        let layer = this.props.layers[e.target.id];
+        this.props.dispatch(removeViewerLayer(layer));
     }
 
     render() {
         let layers = this.props.layers.map((layer, index) => {
+            layer.id = index;
             return (
                 <Table.Row key={index}>
                   <Table.Cell>{layer.tag}</Table.Cell>

@@ -181,13 +181,13 @@ export const addLayer = (layer) => {
                     dispatch(addLayerOk(layer));
 
                     // TODO: remove socket when layer is removed
-                    let socket = openSocket(backend);
+                    layer.socket = openSocket(backend);
                     let channel = layer.tag;
                     if (layer.creator !== '') {
                         channel = layer.creator + ',' + channel;
                     }
-                    socket.emit('subscribe to channel', channel);
-                    socket.on("message", function(message) {
+                    layer.socket.emit('subscribe to channel', channel);
+                    layer.socket.on("message", function(message) {
                         console.log('message from server: '+message);
                         let cmd = message.slice(0, 9);
                         if (cmd === "new layer") {
@@ -266,10 +266,14 @@ export const addLayerFail = (error) => {
     };
 }
 
-export const removeViewerLayer = (index) => {
+export const removeViewerLayer = (layer) => {
+    if (layer.socket) {
+        console.log("close socket");
+        layer.socket.disconnect();
+    }
     return {
         type: REMOVE_VIEWER_LAYER,
-        index: index
+        id: layer.id
     };
 }
 

@@ -62,15 +62,18 @@ const viewerReducer = (state=initialState, action) => {
             error: action.error
         };
     case REMOVE_VIEWER_LAYER:
-        layers = layers = [];
-        layers.push(...state.layers);
-        layers.splice(action.index, 1);
+        layers = [];
+        for (let i = 0; i < state.layers.length; i++) {
+            if (state.layers[i].id !== action.id) {
+                layers.push(state.layers[i]);
+            }
+        }
         return {
             ...state,
             layers: layers
         };
     case ADD_TO_VIEWER_LAYER:
-        layers = layers = [];
+        layers = [];
         layers.push(...state.layers);
         let sources = [];
         let geometries = [];
@@ -93,7 +96,7 @@ const viewerReducer = (state=initialState, action) => {
             layers: layers
         };
     case REMOVE_FROM_VIEWER_LAYER:
-        layers = layers = [];
+        layers = [];
         layers.push(...state.layers);
         sources = [];
         geometries = [];
