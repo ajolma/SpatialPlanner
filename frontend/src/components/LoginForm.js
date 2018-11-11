@@ -1,8 +1,9 @@
 import React from 'react';
 import {Menu, Input, Button} from 'semantic-ui-react';
-import {backend} from '../config';
+import {connect} from 'react-redux';
+import {onRegister, onLogin} from '../actions/loginActions.js';
 
-export default class LoginForm extends React.Component {
+class LoginForm extends React.Component {
 
     constructor(props) {
         super(props);
@@ -12,50 +13,6 @@ export default class LoginForm extends React.Component {
         };
     }
 
-    register = (user) => {
-        let obj = {
-            method:"POST",
-            mode:"cors",
-            credentials: 'include',
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify(user)
-        };
-        fetch(backend + "/register", obj).then((response) => { // 200-499
-            if (response.ok) {
-                alert("OK");
-            }
-            if (response.status === 409) {
-                alert("Username is taken.");
-            }
-        }).catch((error) => { // 500-599
-            console.log(error);
-        });
-    }
-
-    login = (user) => {
-        let obj = {
-            method:"POST",
-            mode:"cors",
-            credentials: 'include',
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify(user)
-        };
-        fetch(backend + "/login", obj).then((response) => { // 200-499
-            if (response.ok) {
-                response.json().then((data) => {
-                    this.props.login({
-                        username: user.username,
-                        token:data.token
-                    });
-                });
-            } else {
-                alert("Wrong username or password.");
-            }
-        }).catch((error) => { // 500-599
-            console.log(error);
-        });
-    }
-    
     onChange = (event) => {
         let o = {};
         o[event.target.name] = event.target.value;
@@ -69,9 +26,9 @@ export default class LoginForm extends React.Component {
             password:this.state.password
         };
         if (event.target.name === "register") {
-            this.register(user);
+            this.props.dispatch(onRegister(user));
         } else {
-            this.login(user);
+            this.props.dispatch(onLogin(user));
         }
         this.setState({
             username:"",
@@ -109,3 +66,5 @@ export default class LoginForm extends React.Component {
     }
     
 }
+
+export default connect()(LoginForm);

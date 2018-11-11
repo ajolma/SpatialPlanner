@@ -1,10 +1,12 @@
 import React from 'react';
 import {Table, Message, Button} from 'semantic-ui-react';
+import {connect} from 'react-redux';
+import {removeViewerLayer} from '../actions/viewerActions';
 
-export default class Legend extends React.Component {
+class Legend extends React.Component {
 
     removeLayer = (e) => {
-        this.props.removeLayer(e.target.id);
+        this.props.dispatch(removeViewerLayer(e.target.id));
     }
 
     render() {
@@ -49,3 +51,11 @@ export default class Legend extends React.Component {
     }
     
 }
+
+const mapStateToProps = (state) => {
+    return {
+        layers: state.viewer.layers
+    };
+}
+
+export default connect(mapStateToProps)(Legend);

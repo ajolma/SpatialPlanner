@@ -1,31 +1,12 @@
 import React from 'react';
 import {Table, Message, Button} from 'semantic-ui-react';
-import {backend} from '../config';
+import {connect} from 'react-redux';
+import {deleteLayer} from '../actions/creatorActions';
 
-export default class CreatorLegend extends React.Component {
+class CreatorLegend extends React.Component {
 
     deleteLayer = (e) => {
-        let id = e.target.id;
-        console.log("delete layer "+id);
-        let obj = {
-            method: "DELETE",
-            mode: "cors",
-            credentials: 'include',
-            headers: {
-                "Content-Type":"application/json",
-                token: this.props.token
-            }
-        };
-        fetch(backend + "/api/layers/" + id, obj).then((response) => { // 200-499
-            if (response.ok) {
-                this.props.deleteLayer(id);
-            } else {
-                console.log("Server responded with status: "+response.status);
-            }
-        }).catch((error) => { // 500-599
-            console.log(error);
-        });
-        this.props.deleteLayer(id);
+        this.props.dispatch(deleteLayer(this.props.token, e.target.id));
     }
 
     render() {
@@ -66,3 +47,12 @@ export default class CreatorLegend extends React.Component {
     }
     
 }
+
+const mapStateToProps = (state) => {
+    return {
+        layers: state.creator.layers,
+        token: state.login.token
+    };
+}
+
+export default connect(mapStateToProps)(CreatorLegend);

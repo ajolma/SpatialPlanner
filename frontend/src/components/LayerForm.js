@@ -1,8 +1,9 @@
 import React from 'react';
 import {Form, Message, Label, Dropdown, Input, Button} from 'semantic-ui-react';
-import {backend} from '../config';
+import {connect} from 'react-redux';
+import {addLayer} from '../actions/creatorActions.js';
 
-export default class LayerForm extends React.Component {
+class LayerForm extends React.Component {
 
     constructor(props) {
         super(props);
@@ -31,44 +32,17 @@ export default class LayerForm extends React.Component {
                 tags.push(tag);
             }
         }
-        console.log("save layer, tags count = "+tags.length);
-        let layer = {
-            tags: tags,
-            geometries: []
-        };
+        let geometries = [];
         for (let i = 0; i < this.props.polygons.length; i++) {
-            layer.geometries.push({
+            geometries.push({
                 type: "Polygon",
                 coordinates: [this.props.polygons[i]]
             });
         }
-        let obj = {
-            method:"POST",
-            mode:"cors",
-            credentials: 'include',
-            headers:{
-                "Content-Type":"application/json",
-                "token":this.props.token
-            },
-            body:JSON.stringify(layer)
-        };
-        fetch(backend + "/api/layers", obj).then((response) => { // 200-499
-            if (response.ok) {
-                response.json().then((data) => {
-                    console.log(data);
-                    layer._id = data._id;
-                    this.props.newLayer(layer);
-                });
-            } else {
-                response.json().then((data) => {
-                    alert("Server responded: "+data.message);
-                });
-                this.props.newLayer();
-            }
-        }).catch((error) => { // 500-599
-            console.log(error);
-            this.props.newLayer();
-        });
+        this.props.dispatch(addLayer(this.props.token, {
+            tags: tags,
+            geometries: geometries
+        }));
     }
 
     onChangeOfSelectedTags = (event, data) => {
@@ -131,3 +105,12 @@ export default class LayerForm extends React.Component {
     }
 
 }
+
+const mapStateToProps = (state) => {
+    return {
+        token: state.login.token,
+        tags: state.viewer.tags
+    };
+}
+
+export default connect(mapStateToProps)(LayerForm);

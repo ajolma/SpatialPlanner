@@ -1,8 +1,10 @@
 import React from 'react';
 import {Message, Form, Button, Dropdown} from 'semantic-ui-react';
-import {backend} from '../config';
+import {connect} from 'react-redux';
+import {colors} from '../actions/creatorActions';
+import {addLayer} from '../actions/viewerActions';
 
-export default class SearchTool extends React.Component {
+class SearchTool extends React.Component {
 
     constructor(props) {
         super(props);
@@ -26,57 +28,18 @@ export default class SearchTool extends React.Component {
         this.setState(o);
     }
 
+    colorList = []
+
     onSubmit = (event) => {
         event.preventDefault();
         let layer = {
             tag: this.state.tag,
             tags: this.state.tags,
-            color: this.state.color ? this.state.color : this.props.colors.notUsed[0],
+            color: this.state.color ? this.state.color : this.colorList[0].value,
             geometries: []
+            // creator?
         };
-        let obj = {
-            method: "GET",
-            mode: "cors",
-            credentials: 'include',
-            headers: {
-                "Content-Type":"application/json"
-                //"token":this.props.token if the user wants her own layers
-            }
-        };
-        let url = "/layers?tag="+layer.tag;
-        if (layer.tags.length > 0) {
-            url += "&tags=" + layer.tags.join(",");
-        }
-        if (layer.creator) {
-            url += "&creator=" + layer.creator;
-        }
-        fetch(backend + url, obj).then((response) => { // 200-499
-            if (response.ok) {
-                response.json().then((layers) => {
-                    layer.sources = [];
-                    layer.srcInfo = [];
-                    for (let i = 0; i < layers.length; i++) {
-                        // add the source _ids
-                        for (let j = 0; j < layers[i].geometries.length; j++) {
-                            layer.sources.push(layers[i]._id);
-                            layer.geometries.push(layers[i].geometries[j]);
-                        }
-                        layer.srcInfo[layers[i]._id] = {
-                            tags: layers[i].tags,
-                            creator: layers[i].creator
-                        };
-                    }
-                    if (this.state.creator !== '') {
-                        layer.creator = this.state.creator;
-                    }
-                    this.props.addLayer(layer);
-                });
-            } else {
-                console.log("Server responded with status: "+response.status);
-            }
-        }).catch((error) => { // 500-599
-            console.log(error);
-        });
+        this.props.dispatch(addLayer(layer));
     }
 
     render() {
@@ -85,10 +48,9 @@ export default class SearchTool extends React.Component {
         let creators = this.props.creators.map(
             (creator, i) => {return {key: i, text: creator, value: creator};});
         creators.unshift({key: -1, text: '', value: ''});
-        let colors = [];
-        this.props.colors.notUsed = [];
-        for (let i = 0; i < this.props.colors.all.length; i++) {
-            let color = this.props.colors.all[i];
+        this.colorList = [];
+        for (let i = 0; i < colors.length; i++) {
+            let color = colors[i];
             let used = false;
             for (let j = 0; j < this.props.layers.length; j++) {
                 if (this.props.layers[j].color === color) {
@@ -97,8 +59,7 @@ export default class SearchTool extends React.Component {
                 }
             }
             if (!used) {
-                colors.push({key: i, text: color, value: color});
-                this.props.colors.notUsed.push(color);
+                this.colorList.push({key: i, text: color, value: color});
             }
         }
         return (
@@ -138,7 +99,7 @@ export default class SearchTool extends React.Component {
                 <Dropdown name="color"
                           key="color"
                           placeholder='Layer color' fluid search selection
-                          options={colors}
+                          options={this.colorList}
                           value={this.state.color}
                           onChange={this.onChange2}/>
               </Form.Field>
@@ -149,3 +110,13 @@ export default class SearchTool extends React.Component {
     }
     
 }
+
+const mapStateToProps = (state) => {
+    return {
+        tags: state.viewer.tags,
+        creators: state.viewer.creators,
+        layers: state.viewer.layers
+    };
+}
+
+export default connect(mapStateToProps)(SearchTool);
