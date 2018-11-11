@@ -10,9 +10,15 @@ import CreatorLegend from './components/CreatorLegend';
 import LayerForm from './components/LayerForm';
 import SearchTool from './components/SearchTool';
 import {setBackend} from './config';
-import {loginSuccess, onLogout} from './actions/loginActions';
-import {addTags, addCreators} from './actions/viewerActions';
-import {setMode, getLayers as getCreatorLayers} from './actions/creatorActions';
+import {loginSuccess,
+        onLogout,
+        clearError as clearLoginError} from './actions/loginActions';
+import {addTags,
+        addCreators,
+        clearError as clearViewerError} from './actions/viewerActions';
+import {setMode,
+        getLayers as getCreatorLayers,
+        clearError as clearCreatorError} from './actions/creatorActions';
 
 class App extends Component {
 
@@ -23,6 +29,7 @@ class App extends Component {
             setBackend('https://spatial-planner-backend.herokuapp.com');
         }
         super(props);
+        this.state = {};
     }
 
     changeMode = (e) => {
@@ -75,6 +82,22 @@ class App extends Component {
         this.endEdit();
         this.props.dispatch(onLogout(this.props.token));
         this.props.dispatch(setMode('Browse'));
+    }
+
+    static getDerivedStateFromProps(newProps, prevState) {
+        if (newProps.login_error) {
+            alert(newProps.login_error);
+            newProps.dispatch(clearLoginError());
+        }
+        if (newProps.viewer_error) {
+            alert(newProps.viewer_error);
+            newProps.dispatch(clearViewerError());
+        }
+        if (newProps.creator_error) {
+            alert(newProps.creator_error);
+            newProps.dispatch(clearCreatorError());
+        }
+        return null;
     }
 
     render() {
@@ -187,7 +210,10 @@ const mapStateToProps = (state) => {
         token: state.login.token,
         mode: state.creator.mode,
         creatorLayers: state.creator.layers,
-        viewerLayers: state.viewer.layers
+        viewerLayers: state.viewer.layers,
+        login_error: state.login.error,
+        viewer_error: state.viewer.error,
+        creator_error: state.creator.error
     };
 }
 

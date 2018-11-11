@@ -4,18 +4,19 @@ import {addTagsOk} from '../actions/viewerActions';
 export const colors = ["Aqua","Blue","BlueViolet","Brown","BurlyWood","CadetBlue","Chartreuse","Chocolate","Coral","CornflowerBlue","Crimson","Cyan","DarkBlue","DarkCyan","DarkGoldenRod","DarkGray","DarkGrey","DarkGreen","DarkKhaki","DarkMagenta","DarkOliveGreen","DarkOrange","DarkOrchid","DarkRed","DarkSalmon","DarkSeaGreen","DarkSlateBlue","DarkTurquoise","DarkViolet","DeepPink","DeepSkyBlue","DimGrey","DodgerBlue","FireBrick","ForestGreen","Fuchsia","Gainsboro","Gold","GoldenRod","Grey","Green","GreenYellow","HoneyDew","HotPink","IndianRed","Indigo","LawnGreen","LightBlue","LightCoral","LightGreen","LightPink","LightSalmon","LightSeaGreen","LightSkyBlue","LightSteelBlue","Lime","LimeGreen","Linen","Magenta","Maroon","MediumAquaMarine","MediumBlue","MediumOrchid","MediumPurple","MediumSeaGreen","MediumSlateBlue","MediumSpringGreen","MediumTurquoise","MediumVioletRed","MidnightBlue","MistyRose","Moccasin","Navy","Olive","OliveDrab","Orange","OrangeRed","Orchid","PaleGreen","PaleTurquoise","PaleVioletRed","Peru","Pink","Plum","PowderBlue","Purple","RebeccaPurple","Red","RosyBrown","RoyalBlue","SaddleBrown","Salmon","SandyBrown","SeaGreen","Sienna","Silver","SkyBlue","SlateBlue","SpringGreen","SteelBlue","Tan","Teal","Thistle","Tomato","Turquoise","Violet","Yellow","YellowGreen"];
 
 export const SET_MODE = 'SET_MODE';
-export const GET_LAYERS_OK = 'GET_LAYERS_OK';
-export const GET_LAYERS_FAIL = 'GET_LAYERS_FAIL';
-export const CLEAR_LAYERS = 'CLEAR_LAYERS';
-export const ADD_LAYER_OK = 'ADD_LAYER_OK';
-export const ADD_LAYER_FAIL = 'ADD_LAYER_FAIL';
-export const DELETE_LAYER_OK = 'DELETE_LAYER_OK';
-export const DELETE_LAYER_FAIL = 'DELETE_LAYER_FAIL';
+export const GET_CREATOR_LAYERS_OK = 'GET_CREATOR_LAYERS_OK';
+export const GET_CREATOR_LAYERS_FAIL = 'GET_CREATOR_LAYERS_FAIL';
+export const CLEAR_CREATOR_LAYERS = 'CLEAR_CREATOR_LAYERS';
+export const ADD_CREATOR_LAYER_OK = 'ADD_CREATOR_LAYER_OK';
+export const ADD_CREATOR_LAYER_FAIL = 'ADD_CREATOR_LAYER_FAIL';
+export const DELETE_CREATOR_LAYER_OK = 'DELETE_CREATOR_LAYER_OK';
+export const DELETE_CREATOR_LAYER_FAIL = 'DELETE_CREATOR_LAYER_FAIL';
+export const CLEAR_CREATOR_ERROR = 'CLEAR_CREATOR_ERROR';
 
 // Actions
 
 export const getLayers = (token) => {
-    console.log("onGetLayers");
+    console.log("getLayers");
     return dispatch => {
         let obj = {
             method:"GET",
@@ -28,8 +29,10 @@ export const getLayers = (token) => {
         };
         return fetch(backend + "/api/layers", obj).then((response) => { // 200-499
             if (response.ok) {
-                response.json().then((layers) => {
+                response.json().then(layers => {
                     dispatch(getLayersOk(layers));
+                }).catch(error => {
+                    dispatch(getLayersFail(error));
                 });
             } else {
                 dispatch(getLayersFail(response.status));
@@ -56,17 +59,20 @@ export const addLayer = (token, layer) => {
         };
         fetch(backend + "/api/layers", obj).then((response) => { // 200-499
             if (response.ok) {
-                response.json().then((data) => {
+                response.json().then(data => {
                     console.log(data);
                     layer._id = data._id;
                     dispatch(addTagsOk(layer.tags));
                     dispatch(addLayerOk(layer));
+                }).catch(error => {
+                    dispatch(addLayerFail(error));
                 });
             } else {
-                response.json().then((data) => {
+                response.json().then(data => {
                     dispatch(addLayerFail(data.message));
+                }).catch(error => {
+                    dispatch(addLayerFail(error));
                 });
-                dispatch(addLayerFail(response.status));
             }
         }).catch((error) => { // 500-599
             dispatch(addLayerFail(error));
@@ -83,17 +89,18 @@ export const deleteLayer = (token, id) => {
             credentials: 'include',
             headers:{
                 "Content-Type": "application/json",
-                token: this.props.token
+                token: token
             }
         };
         fetch(backend + "/api/layers/" + id, obj).then((response) => { // 200-499
             if (response.ok) {
                 dispatch(deleteLayerOk(id));
             } else {
-                response.json().then((data) => {
+                response.json().then(data => {
                     dispatch(deleteLayerFail(data.message));
+                }).catch(error => {
+                    dispatch(deleteLayerFail(error));
                 });
-                dispatch(deleteLayerFail(response.status));
             }
         }).catch((error) => { // 500-599
             dispatch(deleteLayerFail(error));
@@ -112,49 +119,56 @@ export const setMode = (mode) => {
 
 export const clearLayers = () => {
     return {
-        type: CLEAR_LAYERS,
+        type: CLEAR_CREATOR_LAYERS,
         layers: []
     };
 }
 
-export const getLayersOk = (Layers) => {
+export const getLayersOk = (layers) => {
+    console.log('getLayersOk');
     return {
-        type: GET_LAYERS_OK,
-        layers: Layers
+        type: GET_CREATOR_LAYERS_OK,
+        layers: layers
     };
 }
 
 export const getLayersFail = (error) => {
     return {
-        type: GET_LAYERS_OK,
+        type: GET_CREATOR_LAYERS_FAIL,
         error: error
     };
 }
 
 export const addLayerOk = (layer) => {
     return {
-        type: ADD_LAYER_OK,
+        type: ADD_CREATOR_LAYER_OK,
         layer: layer
     };
 }
 
 export const addLayerFail = (error) => {
     return {
-        type: ADD_LAYER_FAIL,
+        type: ADD_CREATOR_LAYER_FAIL,
         error: error
     };
 }
 
-export const deleteLayerOk = (layer) => {
+export const deleteLayerOk = (id) => {
     return {
-        type: DELETE_LAYER_OK,
-        layer: layer
+        type: DELETE_CREATOR_LAYER_OK,
+        id: id
     };
 }
 
 export const deleteLayerFail = (error) => {
     return {
-        type: DELETE_LAYER_FAIL,
+        type: DELETE_CREATOR_LAYER_FAIL,
         error: error
+    };
+}
+
+export const clearError = () => {
+    return {
+        type: CLEAR_CREATOR_ERROR
     };
 }

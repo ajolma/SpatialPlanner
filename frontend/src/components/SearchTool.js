@@ -36,8 +36,8 @@ class SearchTool extends React.Component {
             tag: this.state.tag,
             tags: this.state.tags,
             color: this.state.color ? this.state.color : this.colorList[0].value,
-            geometries: []
-            // creator?
+            geometries: [],
+            creator: this.state.creator
         };
         this.props.dispatch(addLayer(layer));
     }

@@ -2,6 +2,7 @@ import {backend} from '../config';
 import {setMode,
         clearLayers as clearCreatorLayers,
         getLayers as getCreatorLayers} from './creatorActions';
+import {clearLayers as clearViewerLayers} from './viewerActions';
 
 export const REGISTER_SUCCESS = 'REGISTER_SUCCESS';
 export const REGISTER_FAILED = 'REGISTER_FAILED';
@@ -10,6 +11,7 @@ export const LOGIN_FAILED = 'LOGIN_FAILED';
 export const LOGOUT_SUCCESS = 'LOGOUT_SUCCESS';
 export const LOGOUT_FAILED = 'LOGOUT_FAILED';
 export const LOGIN_REDIRECT = 'LOGIN_REDIRECT';
+export const CLEAR_LOGIN_ERROR = 'CLEAR_LOGIN_ERROR';
 
 export function setSessionStorage(args) {
     sessionStorage.setItem("token", args ? args.token : '');
@@ -30,10 +32,10 @@ export const onRegister = (user) => {
         };
         return fetch(backend + "/register", obj).then((response) => { // 200-499
             if (response.ok) {
-                response.json().then((data) => {
+                response.json().then(data => {
                     dispatch(registerSuccess(user.username, data.token));
-                }).catch(() => {
-                    dispatch(registerFailed("JSON parse error."));
+                }).catch(error => {
+                    dispatch(registerFailed(error));
                 });
             } else {
                 dispatch(registerFailed("Username is taken or bad password."));
@@ -57,16 +59,17 @@ export const onLogin = (user) => {
         };
         return fetch(backend + "/login", obj).then((response) => { // 200-499
             if (response.ok) {
-                response.json().then((data) => {
+                response.json().then(data => {
                     dispatch(loginSuccess(user.username, data.token));
                     setSessionStorage({
                         token: data.token,
                         username: user.username
                     });
                     dispatch(getCreatorLayers(data.token));
-                    this.props.dispatch(setMode('Add'));
-                }).catch(() => {
-                    dispatch(loginFailed("JSON parse error."));
+                    dispatch(setMode('Add'));
+                    return;
+                }).catch(error => {
+                    dispatch(loginFailed(error));
                 });
             } else {
                 dispatch(loginFailed("Wrong username or password."));
@@ -93,6 +96,7 @@ export const onLogout = (token) => {
         return fetch(backend + "/logout", obj).then((response) => { // 200-499
             if (response.ok) {
                 dispatch(clearCreatorLayers());
+                dispatch(clearViewerLayers());
                 dispatch(logoutSuccess());
             } else {
                 dispatch(logoutFailed("Can't logout."));
@@ -143,5 +147,11 @@ export const logoutFailed = (error) => {
     return {
         type: LOGOUT_FAILED,
         error: error
+    };
+}
+
+export const clearError = () => {
+    return {
+        type: CLEAR_LOGIN_ERROR
     };
 }

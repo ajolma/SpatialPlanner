@@ -5,11 +5,13 @@ export const ADD_TAGS_OK = 'ADD_TAGS_OK';
 export const ADD_TAGS_FAIL = 'ADD_TAGS_FAIL';
 export const ADD_CREATORS_OK = 'ADD_CREATORS_OK';
 export const ADD_CREATORS_FAIL = 'ADD_CREATORS_FAIL';
-export const ADD_LAYER_OK = 'ADD_LAYERS_OK,';
-export const ADD_LAYER_FAIL = 'ADD_LAYERS_FAIL';
-export const REMOVE_LAYER = 'REMOVE_LAYER';
-export const ADD_TO_LAYER = 'ADD_TO_LAYER';
-export const REMOVE_FROM_LAYER = 'REMOVE_FROM_LAYER';
+export const ADD_VIEWER_LAYER_OK = 'ADD_VIEWER_LAYERS_OK,';
+export const ADD_VIEWER_LAYER_FAIL = 'ADD_VIEWER_LAYERS_FAIL';
+export const REMOVE_VIEWER_LAYER = 'REMOVE_VIEWER_LAYER';
+export const ADD_TO_VIEWER_LAYER = 'ADD_TO_VIEWER_LAYER';
+export const REMOVE_FROM_VIEWER_LAYER = 'REMOVE_FROM_VIEWER_LAYER';
+export const CLEAR_VIEWER_LAYERS = 'CLEAR_VIEWER_LAYERS';
+export const CLEAR_VIEWER_ERROR = 'CLEAR_VIEWER_ERROR';
 
 // Actions
 
@@ -24,10 +26,10 @@ export const addTags = () => {
         };
         return fetch(backend + "/tags", obj).then((response) => { // 200-499
             if (response.ok) {
-                response.json().then((tags) => {
+                response.json().then(tags => {
                     dispatch(addTagsOk(tags));
-                }).catch(() => {
-                    dispatch(addTagsFail("JSON parse error."));
+                }).catch(error => {
+                    dispatch(addTagsFail(error));
                 });
             } else {
                 dispatch(addTagsFail(response.status));
@@ -49,10 +51,10 @@ export const addCreators = () => {
         };
         return fetch(backend + "/creators", obj).then((response) => { // 200-499
             if (response.ok) {
-                response.json().then((creators) => {
+                response.json().then(creators => {
                     dispatch(addCreatorsOk(creators));
-                }).catch(() => {
-                    dispatch(addCreatorsFail("JSON parse error."));
+                }).catch(error => {
+                    dispatch(addCreatorsFail(error));
                 });
             } else {
                 dispatch(addCreatorsFail(response.status));
@@ -100,15 +102,13 @@ const getLayer = (id) => {
         };
         fetch(backend + "/layers/" + id, obj).then((response) => { // 200-499
             if (response.ok) {
-                response.json()
-                    .then(layer => {
-                        resolve(layer);
-                    })
-                    .catch(error => {
-                        reject(error);
-                    });
+                response.json().then(layer => {
+                    resolve(layer);
+                }).catch(error => {
+                    reject(error);
+                });
             } else {
-                reject("Server responded with status: "+response.status);
+                reject(response.status);
             }
         }).catch((error) => { // 500-599
             reject(error);
@@ -159,7 +159,7 @@ export const addLayer = (layer) => {
         if (layer.tags.length > 0) {
             url += "&tags=" + layer.tags.join(",");
         }
-        if (layer.creator) {
+        if (layer.creator !== '') {
             url += "&creator=" + layer.creator;
         }
         return fetch(backend + url, obj).then((response) => { // 200-499
@@ -183,7 +183,7 @@ export const addLayer = (layer) => {
                     // TODO: remove socket when layer is removed
                     let socket = openSocket(backend);
                     let channel = layer.tag;
-                    if (layer.creator) {
+                    if (layer.creator !== '') {
                         channel = layer.creator + ',' + channel;
                     }
                     socket.emit('subscribe to channel', channel);
@@ -196,18 +196,22 @@ export const addLayer = (layer) => {
                                 message = JSON.parse(message);
                                 dispatch(maybeAddToLayer(layer, message));
                             } catch(e) {
-                                dispatch(addLayerFail(message));
+                                dispatch(addLayerFail("Error in message: "+message));
                             }
                         }
                         if (cmd === "layer del") {
                             message = message.replace(/^layer deleted: /, '');
-                            message = JSON.parse(message);
-                            dispatch(maybeRemoveFromLayer(layer, message));
+                            try {
+                                message = JSON.parse(message);
+                                dispatch(maybeRemoveFromLayer(layer, message));
+                            } catch(e) {
+                                dispatch(addLayerFail("Error in message: "+message));
+                            }
                         }
                     });
                     
-                }).catch(() => {
-                    dispatch(addLayerFail("JSON parse error."));
+                }).catch(error => {
+                    dispatch(addLayerFail(error));
                 });
             } else {
                 dispatch(addLayerFail(response.status));
@@ -250,28 +254,28 @@ export const addCreatorsFail = (error) => {
 
 export const addLayerOk = (layer) => {
     return {
-        type: ADD_LAYER_OK,
+        type: ADD_VIEWER_LAYER_OK,
         layer: layer
     };
 }
 
 export const addLayerFail = (error) => {
     return {
-        type: ADD_LAYER_FAIL,
+        type: ADD_VIEWER_LAYER_FAIL,
         error: error
     };
 }
 
 export const removeViewerLayer = (index) => {
     return {
-        type: REMOVE_LAYER,
+        type: REMOVE_VIEWER_LAYER,
         index: index
     };
 }
 
 export const addToLayer = (viewerLayer, creatorLayer) => {
     return {
-        type: ADD_TO_LAYER,
+        type: ADD_TO_VIEWER_LAYER,
         layer: viewerLayer,
         add: creatorLayer
     };
@@ -279,8 +283,21 @@ export const addToLayer = (viewerLayer, creatorLayer) => {
 
 export const removeFromLayer = (viewerLayer, creatorLayer) => {
     return {
-        type: REMOVE_FROM_LAYER,
+        type: REMOVE_FROM_VIEWER_LAYER,
         layer: viewerLayer,
         remove: creatorLayer
+    };
+}
+
+export const clearLayers = () => {
+    return {
+        type: CLEAR_VIEWER_LAYERS,
+        layers: []
+    };
+}
+
+export const clearError = () => {
+    return {
+        type: CLEAR_VIEWER_ERROR
     };
 }

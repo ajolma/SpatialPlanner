@@ -66,7 +66,8 @@ class LayerForm extends React.Component {
                 <Message>
                   <Message.Header>Layer creation tool</Message.Header>
                   <p>
-                    Add polygons using map drawing tools, add tags separated by comma and space and then save.
+                    Add polygons using map drawing tools,
+                    add tags separated by comma and space and then save.
                   </p>
                 </Message>
               </Form.Field>

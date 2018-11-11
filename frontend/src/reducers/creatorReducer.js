@@ -1,18 +1,20 @@
 import {
     colors,
     SET_MODE,
-    GET_LAYERS_OK,
-    GET_LAYERS_FAIL,
-    CLEAR_LAYERS,
-    ADD_LAYER_OK,
-    ADD_LAYER_FAIL,
-    DELETE_LAYER_OK,
-    DELETE_LAYER_FAIL
+    GET_CREATOR_LAYERS_OK,
+    GET_CREATOR_LAYERS_FAIL,
+    CLEAR_CREATOR_LAYERS,
+    ADD_CREATOR_LAYER_OK,
+    ADD_CREATOR_LAYER_FAIL,
+    DELETE_CREATOR_LAYER_OK,
+    DELETE_CREATOR_LAYER_FAIL,
+    CLEAR_CREATOR_ERROR
 } from '../actions/creatorActions';
 
 const initialState = {
     mode: 'Add',
-    layers: []
+    layers: [],
+    error: undefined
 }
 
 const creatorReducer = (state=initialState, action) => {
@@ -21,10 +23,9 @@ const creatorReducer = (state=initialState, action) => {
     case SET_MODE:
         return {
             ...state,
-            mode: action.mode,
-            error: ''
+            mode: action.mode
         };
-    case GET_LAYERS_OK:
+    case GET_CREATOR_LAYERS_OK:
         let layers = [];
         layers.push(...state.layers);
         for (let i = 0; i < action.layers.length; i++) {
@@ -33,36 +34,33 @@ const creatorReducer = (state=initialState, action) => {
         }
         return {
             ...state,
-            layers: layers,
-            error: ''
+            layers: layers
         };
-    case GET_LAYERS_FAIL:
+    case GET_CREATOR_LAYERS_FAIL:
         return {
             ...state,
             error: action.error
         };
-    case CLEAR_LAYERS:
+    case CLEAR_CREATOR_LAYERS:
         return {
             ...state,
-            layers: [],
-            error: ''
+            layers: []
         };
-    case ADD_LAYER_OK:
+    case ADD_CREATOR_LAYER_OK:
         action.layer.color = colors[state.layers.length];
         layers = [];
         layers.push(...state.layers);
         layers.push(action.layer);
         return {
             ...state,
-            layers: layers,
-            error: ''
+            layers: layers
         };
-    case ADD_LAYER_FAIL:
+    case ADD_CREATOR_LAYER_FAIL:
         return {
             ...state,
             error: action.error
         };
-    case DELETE_LAYER_OK:
+    case DELETE_CREATOR_LAYER_OK:
         layers = [];
         for (let i = 0; i < state.layers.length; i++) {
             if (state.layers[i]._id !== action.id) {
@@ -71,13 +69,17 @@ const creatorReducer = (state=initialState, action) => {
         }
         return {
             ...state,
-            layers: layers,
-            error: ''
+            layers: layers
         };
-    case DELETE_LAYER_FAIL:
+    case DELETE_CREATOR_LAYER_FAIL:
         return {
             ...state,
             error: action.error
+        };
+    case CLEAR_CREATOR_ERROR:
+        return {
+            ...state,
+            error: undefined
         };
     default:
         return state;
